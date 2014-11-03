@@ -1,5 +1,36 @@
+//冒泡排序法,最慢的排序算法之一
+function bubbleSort(arr){
+	var temp, index = 0, len = arr.length;
+	while(index < len){
+		for(var i=index; i<len; i++){
+			if(arr[i] > arr[i+1]){
+				temp = arr[i+1];
+				arr[i+1] = arr[i];
+				arr[i] = temp;
+			}
+		}
+		index++;
+	}
+	return arr;
+}
+
+//选择排序法
+function selectionSort(arr){
+	var temp, len = arr.length;
+	for(var i=0; i<len; i++){
+		for(var j=i+1; j<len; j++){
+			if(arr[i] > arr[j]){
+				temp = arr[j];
+				arr[j] = arr[i];
+				arr[i] = temp;
+			}
+		}
+	}
+	return arr;
+}
+
 //快速排序法，其实是一种“分而排之”的理念
-function qSort(arr){
+function quickSort(arr){
 	var smallArr = [], largeArr = [], 
 		item, baseItem,
 		len = arr.length,
@@ -19,4 +50,6 @@ function qSort(arr){
 	}
 	return self(smallArr).concat(baseItem,self(largeArr));
 }
+
+
 

@@ -1,0 +1,22 @@
+//快速排序法，其实是一种“分而排之”的理念
+function qSort(arr){
+	var smallArr = [], largeArr = [], 
+		item, baseItem,
+		len = arr.length,
+		self = arguments.callee;
+	if(len == 0){
+		return [];
+	}
+	baseItem = arr[0];
+	for(var i=1; i<len; i++){
+		item = arr[i];
+		if(item > baseItem){
+			largeArr.push(item);
+		}
+		else{
+			smallArr.push(item);
+		}
+	}
+	return self(smallArr).concat(baseItem,self(largeArr));
+}
+

@@ -28,6 +28,42 @@ function selectionSort(arr){
 	return arr;
 }
 
+//插入排序法
+/*
+step1:
+
+	4	4		3
+	3		4	4	
+	1	1	1	1
+	2	2	2	2
+
+step2:
+	
+	3	3		1
+	4	4	3	3
+	1		4	4
+	2	2	2	2
+
+step3:
+	
+	1	1	1	1
+	3	3		2
+	4	4	3	3
+	2		4	4
+*/
+function insertSort(arr){
+	var temp,inner,len=arr.length;
+	for(var outer=1; outer<len; outer++){
+		temp = arr[outer];
+		inner = outer;
+		while(inner > 0 && arr[inner-1] >= temp){
+			arr[inner] = arr[inner-1];
+			--inner;
+		}
+		arr[inner] = temp;
+	}
+}
+
 //快速排序法，其实是一种“分而排之”的理念
 function quickSort(arr){
 	var smallArr = [], largeArr = [], 
@@ -49,6 +85,7 @@ function quickSort(arr){
 	}
 	return self(smallArr).concat(baseItem,self(largeArr));
 }
+
 
 
 

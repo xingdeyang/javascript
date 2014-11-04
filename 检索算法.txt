@@ -1,6 +1,6 @@
 //顺序查找（略）
 
-//二分法,基于有序的数据进行查找
+//二分法,基于有序的数据(排序算法)进行查找
 function binSearch(arr,data){
 	var len = arr.length,
 		min = 0,

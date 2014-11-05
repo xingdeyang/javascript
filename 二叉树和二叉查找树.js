@@ -14,6 +14,8 @@ function BinaryTree(root){
 	this.root = root || null;
 	this.insert = insert;
 	this.find = find;
+	this.findMin = findMin;
+	this.findMax = findMax;
 }
 
 function insert(data){
@@ -63,14 +65,18 @@ function find(data){
 
 function findMin(){
 	var currentNode = this.root;
-	while(currentNode){
-		if(currentNode.left){
-			currentNode = currentNode.left;
-		}
-		else{
-			return currentNode;
-		}
+	while(currentNode.left !== null){
+		currentNode = currentNode.left;
 	}
+	return currentNode.data;
+}
+
+function findMax(){
+	var currentNode = this.root;
+	while(currentNode.right !== null){
+		currentNode = currrentNode.right;
+	}
+	return currentNode.data;
 }
 
 //For example:

@@ -1,4 +1,4 @@
-//ÊµÏÖ¶ş²æÊ÷
+//å®ç°äºŒå‰æ ‘
 function Node(data,left,right){
 	this.data = data;
 	this.left = left || null;

@@ -16,6 +16,10 @@ function BinaryTree(root){
 	this.find = find;
 	this.findMin = findMin;
 	this.findMax = findMax;
+	//遍历
+	this.traversalAsc = traversalAsc;
+	this.traversalTop = traversalTop;
+	this.traversalBottom = traversalBottom;
 }
 
 function insert(data){
@@ -79,9 +83,42 @@ function findMax(){
 	return currentNode.data;
 }
 
+//升序二叉树遍历
+function traversalAsc(node){
+	var self = arguments.callee;
+	if(!(node == null)){
+		self(node.left);
+		console.log(node.show());
+		selft(node.right);
+	}
+}
+
+//自上而下二叉树遍历
+function traversalTop(node){
+	var self = arguments.callee;
+	if(!(node == null)){
+		console.log(node.show());
+		self(node.left);
+		self(node.right);
+	}
+}
+
+//自下而上二叉树遍历
+function traversalBottom(node){
+	var self = arguments.callee;
+	if(!(node == null)){
+		self(node.left);
+		self(node.right);
+		console.log(node.show());
+	}
+}
+
+
+
 //For example:
 var binaryTreeIns = new BinaryTree();
 binaryTreeIns.insert(50);
 binaryTreeIns.insert(60);
 binaryTreeIns.insert(40);
 binaryTreeIns.find(40);
+

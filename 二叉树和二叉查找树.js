@@ -1,8 +1,9 @@
 //实现二叉树,注意parentNode引用关系
-function Node(data,left,right){
+function Node(data,left,right,parent){
 	this.data = data;
 	this.left = left || null;
 	this.right = right || null;
+	this.parent = parent || null;
 	this.show = show;
 }
 
@@ -16,6 +17,7 @@ function BinaryTree(root){
 	this.find = find;
 	this.findMin = findMin;
 	this.findMax = findMax;
+	this.remove = remove;
 	//遍历
 	this.traversalAsc = traversalAsc;
 	this.traversalTop = traversalTop;
@@ -36,6 +38,7 @@ function insert(data){
 			currentNode = parentNode.left;
 			if(!currentNode){
 				parentNode.left = targetNode;
+				targetNode.parent = parentNode;
 				break;
 			}
 		}
@@ -43,6 +46,7 @@ function insert(data){
 			currentNode = parentNode.right;
 			if(!currentNode){
 				parentNode.right = targetNode;
+				targetNode.parent = parentNode;
 				break;
 			}
 		}
@@ -56,7 +60,7 @@ function find(data){
 			return false;
 		}
 		if(currentNode.data == data){
-			return true;
+			return currentNode;
 		}
 		else if(data < currentNode.data){
 			currentNode = currentNode.left;
@@ -81,6 +85,14 @@ function findMax(){
 		currentNode = currrentNode.right;
 	}
 	return currentNode.data;
+}
+
+function remove(data){
+	var targetNode = this.find(data);
+	if(!targetNode){return;}
+	if(!targetNode.left && targetNode.right){
+		
+	}
 }
 
 //升序二叉树遍历
@@ -112,7 +124,6 @@ function traversalBottom(node){
 		console.log(node.show());
 	}
 }
-
 
 
 //For example:

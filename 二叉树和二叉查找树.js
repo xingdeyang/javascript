@@ -71,20 +71,21 @@ function find(data){
 	}
 }
 
-function findMin(){
-	var currentNode = this.root;
+//若无node传入，则基于根节点查找最小节点
+function findMin(node){
+	var currentNode = node || this.root;
 	while(currentNode.left !== null){
 		currentNode = currentNode.left;
 	}
-	return currentNode.data;
+	return currentNode;
 }
 
-function findMax(){
-	var currentNode = this.root;
+function findMax(node){
+	var currentNode = node || this.root;
 	while(currentNode.right !== null){
 		currentNode = currrentNode.right;
 	}
-	return currentNode.data;
+	return currentNode;
 }
 
 function remove(data){
@@ -122,6 +123,46 @@ function traversalBottom(node){
 		self(node.left);
 		self(node.right);
 		console.log(node.show());
+	}
+}
+
+function remove(data){
+	var targetNode = this.find(data), 
+		parentNode = targetNode.parent,
+		linkNode, linkParentNode, temp;
+	if(!targetNode){return;}
+	if(!parentNode){return;}
+	//无子节点
+	if(!targetNode.left && !targetNode.right){
+		if(parentNode.left && parentNode.left == targetNode){
+			parentNode.left = null;
+		}
+		if(parentNode.right && parentNode.right == targetNode){
+			parentNode.right = null;
+		}
+	}
+	//一个子节点
+	else if(!(targetNode.left && targetNode.right)){
+		linkNode = targetNode.left || targetNode.right;
+		linkNode.parent = parentNode;
+		parentNode.left == targetNode ? (parentNode.left = linkNode) : (parentNode.right = linkNode);
+		
+	}
+	//两个子节点
+	else{
+		linkNode = this.findMax(targetNode.left);
+		temp = targetNode.left;
+		linkParentNode = linkNode.parent;
+		parentNode.left == targetNode ? (parentNode.left = linkNode) : (parentNode.right = linkNode);
+		if(linkParentNode == targetNode){
+			return;
+		}
+		else{
+			linkParentNode.right = null;
+			linkNode.left = temp;
+			temp.parent = linkNode;
+		}
+		
 	}
 }
 

@@ -1,0 +1,22 @@
+/*
+	Module模式被定义为一种为对象提供公有和私有封装的方法
+	Nodejs在语言层面已经（通过module,exports,require）提供了这种模块机制
+	基于浏览器宿主环境的javascript则需要通过自我实现，最新版的ECMAScript(Harmony)已经考虑了该需求
+*/
+
+	//case1:通过闭包模拟私有以实现模块化
+	var testModule = (function(requireModule){
+		var counter = 0;
+			/*
+				...
+				counter为私有变量，可使用requireModule对外暴露的API
+			*/
+		return {
+			incrementCounter: function(){
+				counter++;
+			},
+			resetCounter: function(){
+				counter = 0;
+			}
+		};
+	})(module1);

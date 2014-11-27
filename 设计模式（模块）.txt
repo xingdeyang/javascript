@@ -1,15 +1,16 @@
 /*
-	Moduleģʽ������Ϊһ��Ϊ�����ṩ���к�˽�з�װ�ķ���
-	Nodejs�����Բ����Ѿ���ͨ��module,exports,require���ṩ������ģ�����
-	�������������������javascript����Ҫͨ������ʵ�֣����°��ECMAScript(Harmony)�Ѿ������˸�����
+	Module:
+	模块模式被定义为一种为对象提供公有和私有封装的方法
+	Nodejs在语言层面已经（通过module,exports,require）提供了这种模块机制
+	基于浏览器宿主环境的javascript则需要通过自我实现，最新版的ECMAScript(Harmony)已经考虑了该需求
 */
 
-	//case1:ͨ���հ�ģ��˽����ʵ��ģ�黯
-	var testModule = (function(requireModule){
+	//section1:通过闭包模拟私有以实现模块化
+	var testModule = (function(){
 		var counter = 0;
 			/*
 				...
-				counterΪ˽�б�������ʹ��requireModule���Ⱪ¶��API
+				counter为私有变量
 			*/
 		return {
 			incrementCounter: function(){
@@ -22,8 +23,27 @@
 	})(module1);
 	
 	
-	//case2:����seajsʵ��ģ�黯���ص�Դ�����˼·����
-	1.ģ�黺�棨id��ʾ��״̬��ƣ�
-	2.ģ����غ���ִ������module����ͨ��require����user��������ģ��ʱִ��factory,Ҫ�ر�ע��module.exports��η���
-	3.ģ��㼶�����Ľ������
-	4.·�����
+	//section2: 模块模式的变体（导入混合）
+	var myModule = (function($,_){
+		var privateVariable;
+		function privateMethod(){
+			...
+			//使用导入模块jquery,underscore
+		}
+		return {
+			publicMethod: function(){
+				privateMethod();
+			}
+		};
+	})(jQuery,_);
+	
+	
+	//section3: 关于模块命名
+	在不考虑使用模块化工具库的情况下，一般采用命名空间的方式来定义各模块名称
+	
+	
+	//section4:关于seajs实现模块化加载的源码设计思路待续
+	1.模块缓存（id标示，状态设计）
+	2.模块加载后自执行生成module对象，通过require或者user方法调用模块时执行factory,要特别注意module.exports如何返回
+	3.模块层级依赖的解决方案
+	4.路由设计

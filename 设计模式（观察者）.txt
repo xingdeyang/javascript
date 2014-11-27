@@ -6,36 +6,72 @@
 	被观察者可以将其从所维护的组中删除
 */
 
-	//section1: 分解上述定义得到需要实现的组件如下
-	1.被观察者：维护一组观察者，提供用于增加和删除观察者的方法
-	2.观察者：提供一个更新接口，用于被观察者状态发生变化时，得到通知
-	3.具体的被观察者：状态变化时广播通知给观察者，保持具体的观察者的信息
-	4.具体的观察者：保持一个指向具体被观察者的引用
+	//section1: javascript中的发布/订阅模式
+	在javascript中我们通常使用pub/sub来实现观察者模式，在nodejs中已经在语言层面支持这种模式（也可以叫做事件机制）
+	但其与观察者模式还是有写区别的：
+	1.pub/sub模式是基于一个事件/主题来作为观察者与被观察者沟通的桥梁
+	2.这个事件/主题允许定义应用相关的事件，该事件可以传递特殊参数，参数中包含订阅者所需的值
+	3.很好的解耦订阅者和发布者
 	
-	//section2:
-	function ObserveList(){
-		this.observeList = [];
-	}
-	ObserveList.prototype.add = function(obj){
-		this.observeList.push(obj);
-	};
-	ObserveList.prototype.empty = function(){
-		this.observeList = [];
-	};
-	ObserveList.prototype.removeAt = function(index){
-		this.observeList.splice(index,1);
-	};
-	ObserveList.prototype.notify = function(context){
-		var len = this.observeList.length;
-		for(var i=0; i<len; i++){
-			this.observeList[i].update(context);
+	//section2:产品中的实现
+	S.MQ = {
+		_handlers: {},
+		_topics: function(topics){
+			return topics.indexOf(',') == -1 ? [topics] : topics.replace(/\s/g,function(){return '';}).split(',');
+		},
+		_topicExist: function(topic){
+			if(this._handlers.hasOwnProperty(topic) && this.handlers[topic].length > 0){
+				return true;
+			}
+			return;
+		},
+		_each: function(array,processor){
+			var item;
+			for(var i=0,len=array.length; i<len; i++){
+				item = array[i];
+				processor(item,i);
+			}
+		},
+		sub: function(topic,handler){
+			var me = this;
+			this._each(me._topics(topic),function(item,i){
+				if(me._topicExist(item)){
+					me._handlers[item].push(handler);
+				}
+				else{
+					me._handlers[item] = [handler];
+				}
+			});
+		},
+		pub: function(topic,data){
+			var me = this;
+			this._each(this._topics(topic),function(topic){
+				if(this._topicExist(topic)){
+					me._each(me._handlers[topic],function(handler){
+						handler({topic:topic,data:data});
+					});
+				}
+				else{
+					log('the topic' + topic + 'is not exist');
+				}
+			});
+		},
+		unsub: function(topic,handler){
+			var me = this;
+			this._each(this._topics(topic),function(topic){
+				if(me._topicExist(topic)){
+					me._each(me._handlers[topic],function(item,i){
+						if(item == handler){
+							me._handlers[topic].splice(i,1);
+						}
+					});
+				}
+				else{
+					log('the topic' + topic + 'is not exist');
+				}
+			});
+		},
+		hasSub: function(topic){
+			return this._topicExist(topic);
 		}
 	};
-	
-	function Observer(observeListInstance){
-		this.observeListInstance = observeListInstance;
-	}
-	Observer.prototype.update = function(context){
-		//...
-	};
-	

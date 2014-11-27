@@ -1,0 +1,33 @@
+/*
+	享元模式：
+		场景：
+			1.存在资源密集型的对象
+			2.这些对象所保存数据有一部分可以转化为外在数据（高内聚）
+			3.在外在数据分离出去后，对象数量将会有量级的减少
+		特点：
+			1.将对象数据一分为二，内在数据用来创建共享对象，用于共享
+			  外在数据保存在管理器中，以便于标示对象的唯一性
+			2.享元模式就原有对象拆分为三部分：共享对象，对象工厂，对象管理器
+		优点： 
+			1.减少资源消耗，提高代码运行效率
+			
+*/
+
+	
+	//section1:以汽车作为对象来看
+	function Car(make,model,year,owner,tag,renewDate){
+		this.make = make;
+		this.model = model;
+		this.year = year;
+		this.owner = owner;
+		this.tag = tag;
+		this.renewDate = renewDate;
+	}
+	
+	Car.prototype.getMake = function(){};
+	Car.prototype.getModel = function(){};
+	.....
+	
+	从上述代码我们可以看出，汽车对象自身的数量是非常大的，但每年不同汽车厂商生产的
+	不同汽车型号是有限的(也即共享对象的数量是可控的)，当然每部车都拥有自己的tag,owner,renewDate,
+	这些都可以看做是外在数据。若把这些外在数据单独提取出来，那我们需要实例化的汽车对象

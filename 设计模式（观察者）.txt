@@ -75,3 +75,13 @@
 			return this._topicExist(topic);
 		}
 	};
+	
+	//section3:注意点
+	上述是在全局作用域中，在实际应用中我们可能会再次封装，pub/sub可能处于不同的上下文，则sub要事先绑定handler的context
+	具体实现可参见$.proxy,大致如下：
+	var proxy = (function(handler,context){
+		return function(){
+			handler.apply(context,arguments);
+		};
+	})();
+	

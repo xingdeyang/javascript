@@ -1,0 +1,21 @@
+/*
+	Singleton:
+	单例模式被熟知的原因是它限制了类的实例化次数只能一次（按需(惰性)且避免重复实例化）
+	在javascript中一个对象直接量（var a = {};）其实就可以认为是一个单例
+*/
+	
+	//section1:
+	var Singleton = (function(){
+		var instance;
+		function Constructor(){
+			//...
+		}
+		return {
+			getInstance: function(){
+				if(!instance){
+					instance = new Constructor();
+				}
+				return instance;
+			}
+		};
+	})();

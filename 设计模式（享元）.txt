@@ -78,9 +78,24 @@
 						renewDate: renewDate,
 						car: car
 					};
-				};
+				},
+				transferOwnerShip: function(tag,newOwner){
+					var car = carStore[tag];
+					car.owner = newOwner;
+				},
+				getCarInfo: function(tag){
+					return carStore[tag];
+				}
+				...
 			};
 		})();
+		
+	
+	//section3: 个人的一些看法
+	在网上有很多我认为错误的一些业务场景非要往该模式去套，比如有人提到自己网站中无处不在的各种提示框等，
+	享元模式在强调区分内外部数据（高内聚）的同时有一个很重要的隐含点是所有的对象都是需要缓存的以便于后续
+	的业务使用，但提示框这种业务场景明显是不需要的，欢迎拍砖
+	
 	
 	
 	

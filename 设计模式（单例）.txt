@@ -1,10 +1,32 @@
 /*
 	Singleton:
 	单例模式被熟知的原因是它限制了类的实例化次数只能一次（按需(惰性)且避免重复实例化）
-	在javascript中一个对象直接量（var a = {};）其实就可以认为是一个单例
+	非常适用于大量数据的单体直到需要的时候才去实例化
 */
 	
-	//section1:
+	//section1:最简单的单体就是对象字面量
+	var singleTon = {
+		attr1: 1,
+		method1: function(){}
+	};
+	
+	
+	//section2：对象字面量所有成员都是公开的，通过闭包实现的私有成员的单体
+	var singleTon = (function(){
+		var attr = 1,
+			fn = function(){};
+		return {
+			getAttr: function(){
+				return attr;
+			},
+			method: function(){
+				fn();
+			}
+		};
+	})();
+	
+	
+	//section3: 那如何实现单体的惰性加载呢
 	var Singleton = (function(){
 		var instance;
 		function Constructor(){
@@ -19,3 +41,15 @@
 			}
 		};
 	})();
+	
+	
+	//section4: 通过静态属性缓存来实现单体（不太常用的作法）
+	function Constructor(){
+		if(typeof Constructor.instance == 'object'){
+			return Constructor.instance;
+		}
+		...
+		some initial operation code
+		...
+		Constructor.instance = this;
+	}

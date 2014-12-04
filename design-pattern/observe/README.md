@@ -36,105 +36,105 @@ var proxy = (function(handler,context){
 
 ## 代码示例
 ```
-    //section1:产品中的实现
-	S.MQ = {
-		_handlers: {},
-		_topics: function(topics){
-			return topics.indexOf(',') == -1 ? [topics] : topics.replace(/\s/g,function(){return '';}).split(',');
-		},
-		_topicExist: function(topic){
-			if(this._handlers.hasOwnProperty(topic) && this.handlers[topic].length > 0){
-				return true;
-			}
-			return;
-		},
-		_each: function(array,processor){
-			var item;
-			for(var i=0,len=array.length; i<len; i++){
-				item = array[i];
-				processor(item,i);
-			}
-		},
-		sub: function(topic,handler){
-			var me = this;
-			this._each(me._topics(topic),function(item,i){
-				if(me._topicExist(item)){
-					me._handlers[item].push(handler);
-				}
-				else{
-					me._handlers[item] = [handler];
-				}
-			});
-		},
-		pub: function(topic,data){
-			var me = this;
-			this._each(this._topics(topic),function(topic){
-				if(this._topicExist(topic)){
-					me._each(me._handlers[topic],function(handler){
-						handler({topic:topic,data:data});
-					});
-				}
-				else{
-					log('the topic' + topic + 'is not exist');
-				}
-			});
-		},
-		unsub: function(topic,handler){
-			var me = this;
-			this._each(this._topics(topic),function(topic){
-				if(me._topicExist(topic)){
-					me._each(me._handlers[topic],function(item,i){
-						if(item == handler){
-							me._handlers[topic].splice(i,1);
-						}
-					});
-				}
-				else{
-					log('the topic' + topic + 'is not exist');
-				}
-			});
-		},
-		hasSub: function(topic){
-			return this._topicExist(topic);
+//section1:产品中的实现
+S.MQ = {
+	_handlers: {},
+	_topics: function(topics){
+		return topics.indexOf(',') == -1 ? [topics] : topics.replace(/\s/g,function(){return '';}).split(',');
+	},
+	_topicExist: function(topic){
+		if(this._handlers.hasOwnProperty(topic) && this.handlers[topic].length > 0){
+			return true;
 		}
-	};
-
-
-    //section2: 孩子妈叫孩子回家吃饭的场景
-	var Mom = function(){
-		this.son = [];
-	};
-	Mom.prototype.call = function(msg){
-		this.son.forEach(function(item){
-			item.receive(msg);
-		});
-	};
-	var Son = function(name){
-		this.name = name;
-	};
-	Son.prototype.subscribe = function(mom){
-		var me = this,
-			isCall = mom.son.some(function(item){
-				return me === item;
-			});
-		if(!isCall){
-			mom.son.push(me);
+		return;
+	},
+	_each: function(array,processor){
+		var item;
+		for(var i=0,len=array.length; i<len; i++){
+			item = array[i];
+			processor(item,i);
 		}
-		return this;
-	};
-	Son.prototype.unsubscribe = function(mom){
+	},
+	sub: function(topic,handler){
 		var me = this;
-		mom.son = mom.son.filter(function(item){
-			return item !== me;
+		this._each(me._topics(topic),function(item,i){
+			if(me._topicExist(item)){
+				me._handlers[item].push(handler);
+			}
+			else{
+				me._handlers[item] = [handler];
+			}
 		});
-		return this;
-	};
-	Son.prototype.receive = function(msg){
-		//...
-	};
-	var mom = new Mom(), son = new Son('小明');
-	son.subscribe(mom);
-	mom.call('滚出去最近很火');```
+	},
+	pub: function(topic,data){
+		var me = this;
+		this._each(this._topics(topic),function(topic){
+			if(this._topicExist(topic)){
+				me._each(me._handlers[topic],function(handler){
+					handler({topic:topic,data:data});
+				});
+			}
+			else{
+				log('the topic' + topic + 'is not exist');
+			}
+		});
+	},
+	unsub: function(topic,handler){
+		var me = this;
+		this._each(this._topics(topic),function(topic){
+			if(me._topicExist(topic)){
+				me._each(me._handlers[topic],function(item,i){
+					if(item == handler){
+						me._handlers[topic].splice(i,1);
+					}
+				});
+			}
+			else{
+				log('the topic' + topic + 'is not exist');
+			}
+		});
+	},
+	hasSub: function(topic){
+		return this._topicExist(topic);
+	}
+};
+
+
+//section2: 孩子妈叫孩子回家吃饭的场景
+var Mom = function(){
+	this.son = [];
+};
+Mom.prototype.call = function(msg){
+	this.son.forEach(function(item){
+		item.receive(msg);
+	});
+};
+var Son = function(name){
+	this.name = name;
+};
+Son.prototype.subscribe = function(mom){
+	var me = this,
+		isCall = mom.son.some(function(item){
+			return me === item;
+		});
+	if(!isCall){
+		mom.son.push(me);
+	}
+	return this;
+};
+Son.prototype.unsubscribe = function(mom){
+	var me = this;
+	mom.son = mom.son.filter(function(item){
+		return item !== me;
+	});
+	return this;
+};
+Son.prototype.receive = function(msg){
+	//...
+};
+var mom = new Mom(), son = new Son('小明');
+son.subscribe(mom);
+mom.call('滚出去最近很火');```
 
 
 

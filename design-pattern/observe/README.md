@@ -22,14 +22,13 @@
 * 上述是在全局作用域中，在实际应用中我们可能会再次封装，pub/sub可能处于不同的上下文，则sub要事先绑定handler的context
 具体实现可参见$.proxy,大致如下：
 
-
 ```
 var proxy = (function(handler,context){
 	return function(){
 		handler.apply(context,arguments);
 	};
-})();```
-
+})();
+```
 
 * 观察者模式其实也是异步编程解耦的很好解决方案，但在多异步的协作上（并行，串行）并不是很突出，具体可参见nodejs-notes版块中相关文章;此外很多框架（MVC框架Backbone）在实现中已将其作为核心架构模式（贯穿了Model和Collection两个模块,其都继承自event模块从而让自身拥有sub/pub机制），在backbone中collection从服务端拉取的数据model逐个对比后会触发对应model的change事件（包括add,remove,update等），从而可以和view层建立相应通知机制以反映到具体的视图上
 
@@ -134,7 +133,8 @@ Son.prototype.receive = function(msg){
 };
 var mom = new Mom(), son = new Son('小明');
 son.subscribe(mom);
-mom.call('滚出去最近很火');```
+mom.call('滚出去最近很火');
+```
 
 
 

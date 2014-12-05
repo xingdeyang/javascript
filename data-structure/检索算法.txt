@@ -1,0 +1,48 @@
+//顺序查找（略）
+
+//二分法,基于有序的数据(排序算法)进行查找
+function binSearch(arr,data){
+	var len = arr.length,
+		min = 0,
+		max = len-1,
+		base;
+	while(min <= max){
+		base = Math.floor((min + max)/2);
+		if(data == arr[base]){
+			return base;
+		}
+		else if(data > arr[base]){
+			min = base + 1;
+		}
+		else{
+			max = base - 1;
+		}
+	}
+	return -1;
+}
+
+//若上述二分法数据源中存在重复目标数据，统计出重复次数和相对位置
+function binSearchRepeatCount(arr,data){
+	var count = 0,
+		position = binSearch(arr,data);
+	if(position > -1){
+		++count;
+		for(var i=position-1; i>0; i--){
+			if(arr[i] == data){
+				++count;
+			}
+			else{
+				break;
+			}
+		}
+		for(var j=position+1; j<len; j++){
+			if(arr[j] == data){
+				++count;
+			}
+			else{
+				break;
+			}
+		}
+	}
+	return count;
+}

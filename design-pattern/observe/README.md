@@ -1,12 +1,13 @@
 # Observe: 观察者模式
 ## 简介
-它是这样一种设计模式，一个被称作被观察者的对象，维护一组被称为观察者的对象，这些对象依赖于被观察者
-被观察者自动将自身的状态的任何变化通知给他们。当被观察者需要将一些变化通知给观察者的时候，它将采用广播的
-方式，这条广播可能包含特定于这条通知的一些数据。当特定的观察者不需要接收它所注册的被观察者的通知的时候，
-被观察者可以将其从所维护的组中删除，严格按照该定义的实现如section2
+它是这样一种设计模式，一个被称作被观察者的对象，维护一组被称为观察者的对象，这些对象依赖于被观察者，
+被观察者自动将自身的状态的任何变化通知给他们。当被观察者需要将一些变化通知给观察者的时候，它将采用广播的方式，这条广播可能包含特定于这条通知的一些数据（这里由于具体通知数据的不同我们又可以将观察者模式划分为
+推和拉两种模型）。当特定的观察者不需要接收它所注册的被观察者的通知的时候，被观察者可以将其从所维
+护的集合中删除，严格按照该定义的实现如section2，关于推拉模型见section3
 
 在javascript中我们通常使用pub/sub来实现观察者模式，在nodejs中已经在语言层面支持这种模式（也可以叫做事件机制）
 而浏览器中的Dom事件本身也就是观察者模式的一种运用，但pub/sub其与观察者模式还是有写区别的：
+
 1. pub/sub模式是基于一个事件/主题来作为观察者与被观察者沟通的桥梁(^^who pub who is the publisher,the subscribe callback is the subscriber^^)
 
 1. 这个事件/主题允许定义应用相关的事件，该事件可以传递特殊参数，参数中包含订阅者所需的值
@@ -19,7 +20,7 @@
 ## 使用场景
 略
 ## 注意事项
-* 上述是在全局作用域中，在实际应用中我们可能会再次封装，pub/sub可能处于不同的上下文，则sub要事先绑定handler的context
+* section1是在全局作用域中，在实际应用中我们可能会再次封装，pub/sub可能处于不同的上下文，则sub要事先绑定handler的context
 具体实现可参见$.proxy,大致如下：
 
 ```
@@ -134,6 +135,86 @@ Son.prototype.receive = function(msg){
 var mom = new Mom(), son = new Son('小明');
 son.subscribe(mom);
 mom.call('滚出去最近很火');
+
+
+//section3
+推模型：被观察者主动向观察者推送相关信息，不管观察者是否需要，推送的信息通常是全部所需，相当于广播,上述
+        代码示例即为推模型
+拉模型：被观察者在通知观察者的时候，只传递少量信息，如果观察者需要更加详细的数据，观察者主动根据这些
+		少量数据自己去获取，相当于是从被观察者对象中拉数据。一般这种模式的实现中，会把被观察者对象自身
+		传递出去，这样观察者在需要具体数据是就可以根据这个引用来获取了。
+(function(){
+	//抽象被观察者
+	var Subject = function(){
+		this.readers = [];
+	};
+
+	Subject.prototype = {
+		attach: function(reader){
+			this.readers.push(reader);
+		},
+		detach: function(reader){
+			for(var i=0,len=this.readers.length; i<len; i++){
+				if(reader == this.readers[i]){
+					this.readers.splice(i,1);
+					return true;
+				}
+			}
+			return false;
+		},
+		notify: function(){
+			for(var i=0,len=this.readers.length; i<len; i++){
+				this.readers[i].update(this);
+			}
+		}
+	};
+
+	//具体被观察者(继承的实现省略)
+	function Newspaper(){
+		Newspaper.super.constructor.call(this);
+		this.content = '';
+	}
+	extend(Newspaper,Subject);
+	Newspaper.prototype.getContent = function(){
+		return this.content;
+	};
+	Newspaper.prototype.setContent = function(content){
+		this.content = content;.
+		this.notify();
+	};
+
+
+	//观察者接口
+	function Observer(){}
+	Observer.prototype.update = function(){};
+
+	//具体观察者（即读报者）
+	function Reader(){
+		this.name = '';
+	}
+	extend(Reader,Observer);
+	Reader.prototype.update = function(subject){
+		console.log('收到报纸了，内容是：' + subject.getContent());
+	};
+
+	new function(){
+		var subject = new Newspaper(),
+			reader1 = new Reader(),
+			reader2 = new Reader(),
+			reader3 = new Reader();
+		reader1.name = '张三';
+		reader2.name = '李四';
+		reader3.name = '王五';
+
+		subject.attach(reader1);
+		subject.attach(reader2);
+		subject.attach(reader3);
+
+		subject.setContent('这里是拉模型');
+	};
+
+	那么具体该使用推还是拉呢，如果被观察者不能明确要给观察者什么数据，干脆把自身引用传递过去，也即使用拉模型，反之亦然。
+})();
 ```
 ## 个人体会
 当一个抽象模型有两个方面，其中一个方面的操作依赖于另一个方面的状态变化，那么就可以选用
@@ -143,6 +224,8 @@ mom.call('滚出去最近很火');
 式，这是一种一对多的关系也是最常见的一种使用场景。当一个对象必须通知其他对象，但是又希望
 这个对象和其他对象之间是一种松散耦合关系，这种情况也可以考虑使用观察者模式。至于观察者
 和被观察者之间关系的建立，处理的方式是灵活的，可以再被观察者对象上注册观察者也可以在观察
-者对象上中注册被观察者（妈妈叫小明吃饭的例子属于后者）
+者对象上中注册被观察者（妈妈叫小明吃饭的例子属于后者）。我们要特别注意随时更新观察者集合，
+及时删除不再需要的观察者对象以免造成不必要的cpu和内存资源消耗，避免被观察者和观察者互相
+观察的情况而造成死循环
 
 

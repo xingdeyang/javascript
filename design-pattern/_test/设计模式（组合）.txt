@@ -229,8 +229,13 @@ SelectField.prototype.getValue = function(){
 	return this.select.options[this.select.selectedIndex].value;
 };
 
+var contactForm = new CompositeForm('contact-form','POST','contact.php');
+contactForm.add(new InputField('first-name','First name'));
+contactForm.add(new SelectField('state','State',{'GD':'guangdong','HB':'hubei'}));
+......
+document.body.appendChild(contactForm.getElement());
 
-
-
-
-
+个人体会：
+在享元模式中提到过组合模式的配合使用从而避免创建对象管理中心数据库，因为组合模式本身的对象层次体系
+中就已经存储了大量对象。那对于组合模式而言，同样道理，如果有大量相似子组件对象并可以将其拆分出内外在
+数据的话可以借助享元模式以复用子组件（内在状态）而不必为从而节省内存开销。

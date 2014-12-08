@@ -1,4 +1,4 @@
 javascript
 ==========
 
-关于javascript的学习笔记
+javascript学习笔记

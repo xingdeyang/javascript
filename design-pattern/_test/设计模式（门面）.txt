@@ -1,0 +1,25 @@
+外观模式：facade
+外观模式属于接口型模式，它提供了一个方便一致性的高层接口而应用程序不用关心实现细节，
+在javascript这是一个使用非常频繁的模式，特别是在浏览器提供API存在许多差异的情况下，
+我们用外观模式封装统一的应用程序接口而隐藏兼容的细节处理，比如添加事件监听标准浏览器
+采用addEventListener而IE使用的是attachEvent，我们就需要自己封装一个addEvent方法，如下：
+function addEvent(el,type,fn){
+	if(el.addEventListener){
+		el.addEventListener(type,fn,false);
+	}
+	else if(el.attachEvent){
+		el.attachEvent('on'+type,fn);
+	}
+	else{
+		el['on' + type] = fn;
+	}
+}
+
+适用场景：
+对于那些反复同时出现的代码，我们就应该考虑是否可以将其封装在一起，如函数a和b多次同时
+出现在代码中，应该考虑将a,b组合起来放到一个新方法中
+
+其实际就是将两个不同的监听函数放到自定义的方法中，之后对DOM对象监听事件时方便使用而
+不用care兼容性问题。
+在jquery中也大量使用该模式，比如常见的Ajax异步请求调用，jquery提供了一个基本的基础性
+$.ajax方法，但同时也提供了更加高级的外观，比如$.get,$.getJSON,$.getScript等

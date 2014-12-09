@@ -1,0 +1,135 @@
+/*
+	装饰者模式：decorate
+	定义：动态地给一个对象添加一些额外的职责，它比生成子类的作法更加灵活，装饰者模式是一种为对象添加特性的技术，
+	它并不使用创建子类这种手段。开发者使用它们的一个通常理由是，它们的应用程序也许包含了需要大量彼此不相干类型
+	对象的特性。想象一下不得不需要去定义上百个不同对象的构造器。比如说一个javascript游戏，对象构造器可以代表不同
+	播放器类型，每一种类型具有不同的功能。一种叫做领主戒指的游戏会需要霍比特人、巫术师、兽人、精灵、山岭巨人等对
+	象的构造器，而这些的数量很容易过百，而我们还要考虑为每一个类型的能力组合创建子类。比如带剑的霍比特人、带指环
+	的霍比特人等等，这并不是非常的使用，当我们考虑到不同能力的数量在不断增长这一因素时，最后肯定是不可控的。装饰
+	者模式不深入依赖于对象是如何创建的,而是专注于拓展它们的功能这一问题上。不同于只依赖于原型继承，我们在一个简单
+	的基础对象上面逐步添加能够提供附加功能的装饰对象。它的想法是不同于子类划分，当我们向一个基础对象添加属性或者
+	方法也许是更加轻巧灵活的。
+	按照定义实现的代码section1
+	
+	适用场景：
+	如果需要为类增添特性或者职责，而从该类派生子类的解决办法并不实际的话就应该使用装饰者模式
+*/
+
+//section1:
+function Sale(price){
+	this.price = price || 100;
+}
+Sale.prototype.getPrice = function(){
+	return this.price;
+};
+Sale.prototype.decorate = function(name){
+	var F = function(){},
+		overrides = this.constructor.decorators[name],
+		newObj,
+	F.prototype = this;
+	newObj = new F();
+	newObj.super = F.prototype;
+	for(var i in overrides){
+		if(overrides.hasOwnProperty(i)){
+			newObj[i] = overrides[i];
+		}
+	}
+	return newObj;
+};
+Sale.decorators = {};
+Sale.decorators.money = {
+	getPrice: function(){
+		return '$' + this.super.getPrice().toFixed(2);
+	}
+};
+Sale.decorators.fedtax = {
+	getPrice: function(){
+		return '$' + this.super.getPrice() * 5 / 100;
+	}
+};
+
+//section2:
+采用经典的自行车行的例子
+var Bicycle = new Interface('Bicycle',['assemble','wash','ride','repair']);
+var BicycleShop = function(){};
+BicycleShop.prototype = {
+	sellBicycle: function(model){
+		var bicycle = this.createBicycle(model);
+		bicycle.assemble();
+		bicycle.wash();
+		return bicycle;
+	},
+	createBicycle: function(model){
+		throw new Error('obstract class not has the operation');
+	}
+};
+
+function extend(subClass,superClass){
+	function F(){}
+	F.prototype = superClass.prototype;
+	subClass.prototype = new F();
+	subClass.prototype.constructor = subClass;
+	subClass.prototype.super = superClass.prototype;
+}
+
+/*AcmeBicycleShop*/
+var AcmeBicycleShop = function(){};
+extend(AcmeBicycleShop,BicycleShop);
+AcmeBicycleShop.prototype.createBicycle = function(model){
+	var bicyle;
+	switch(model){
+		case 'the speedster': bicycle = new Speedster(); break;
+		case 'the lowrider' : bicycle = new Lowrider(); break;
+		default: bicycle = new ComfortCruiser();
+	}
+	return bicycle;
+};
+/*
+	后来这家商店开始为每一种自行车提供一些额外的特色配件，现在顾客加些钱就可以买到带前灯，尾灯或者铃铛的
+	自行车。每一种可选配件都会影响到售价和车的组装方法。这个问题最基本的解决思路是为每一种组合创建一个子
+	类
+*/
+var AcmeComfortCruiser = function(){};
+var AcmeComfortCruiseWithHeadLight = function(){};
+var AcmeComfortCruiseTailLight = function(){};
+/*
+	显然这种方法是行不通的，因为需要为每一种组合创建一个类，还需要不停对工场方法进行修改，以便能创建出属于
+	这些子类的自行车。装饰者模式对于这些实现再合适不过。通过实现一个装饰类：
+*/
+var Bicycle = new Interface('Bicycle',['assemble','wash','ride','repair','getPrice']);
+/*
+	所有自行车类都要实现这个接口，如AcmeComfortCruiser,这里通过继承实现的子类个数是可预期有限的，比如
+	只有几个厂商的牌子，每个牌子虽有不同配置但会有一些共性，所以可以用子类的方式，但每个品牌的车子配置
+	搭配确是五花八门，所以我们要以装饰者的模式来实现
+*/
+var AcmeComfortCruiser = function(){
+	//implements Bicycle
+}
+AcmeComfortCruiser.prototype = {
+	assemble: function(){},
+	wash: function(){},
+	ride: function(){},
+	repair: function(){}
+};
+
+/*为避免生成许多AcmeComfortCruiser的实例，我们在实例化或者生成AcmeComfortCruiser对象时考虑使用单例模式*/
+
+var BicycleDecorator = function(bicycle){
+	this.bicycle = bicycle;
+};
+BicycleDecorator.prototype.decorate = function(name){
+	var overrides = this.constructor.decorators[name];
+	for(var i in overrides){
+		if(overrides.hasOwnProperty(i)){
+			this.bicyle[i] = overrides[i];
+		}
+	}
+	return this.bicycle;
+}:
+BicycleDecorator.decorators = {};
+BicycleDecorator.decorators.tailLight = {
+	//尾灯功能...
+};
+BicycleDecorator.decorators.headLight = {
+	//前灯功能...
+};

@@ -1,0 +1,320 @@
+简介：
+将对象组合成树形结构以表示“部分-整体”的层次结构，组合模式使得用户对单个对象和组合对象的使用具有一致性。
+组合模式是一种专门为web上的动态用户界面量身定制的模式，使用这种模式，可以用一条命令在多个对象上激发复杂
+的或者递归行为。组合模式可以用同样的方法处理对象的集合和其中特定的子对象，组合对象与组成他的对象实现了
+同一批操作。对组合对象执行的这些操作将向下传递到所有的组成对象（在享元模式的日历案例中display方法即是如
+此），这样一来所有的组成对象将会执行相同的操作。这种模式可以用来把一批子对象组织成树形结构，并且使整棵树
+都可以遍历。组合对象的层次体系中有两种类型的对象：叶对象和组合对象。这是一个递归定义，这正是组合模式如此
+有用的原因何在。一个组合对象由一些别的组合对象和叶子对象组成。其中叶子对象不再包含子对象，叶子对象是组合
+对象中最基本的元素，也是各具体操作的落地点。
+组合模式设计的目标是解耦客户程序与复杂的内部架构，使得客户程序对待所有元素都一视同仁，每个子节点都可以复杂
+的存在，对于父节点来说不需要知道子节点的复杂性或者实现子节点的复杂性，只需要关注子节点的特定方法即可。但我
+们要注意的是组合对象的易用性是需要付出一定的代价，那就是由于组合对象调用的任何操作都会被传递到它的所有子对象
+中如果这个层次体系很庞大的话，系统的性能可能会受到影响。
+按照定义实现的代码见section1
+
+使用场景：
+存在一批组织成某种层次体系结构的对象并需要对其进行同一中类型操作（日历，表单验证），组合模式擅长于对大批
+对象进行操作，它专门为组织这类对象并把操作从一个层次向下一个层次传递而设计。
+
+代码示例：
+//section1:
+(function(){
+	function Component(){
+		this.childComponents = [];
+	}
+	Component.prototype = {
+		someOperation: function(){},
+		addChild: function(){
+			throw new Error('object does\'t support this method: addChild');
+		},
+		removeChild: function(){},
+		getChild: function(){}
+	};
+	
+	//组合对象
+	function Composite(){
+		Component.call(this);
+	}
+	extend(Composite,Component);
+	Composite.prototype.someOperation = function(){
+		for(var i=0,len=this.childComponents.length; i<len; i++){
+			this.childComponents[i].someOperation();
+		}
+	};
+	Composite.prototype.addChild = function(child){
+		this.childComponents.push(child);
+	};
+	Composite.prototype.removeChild = function(child){
+		var item;
+		for(var i=0,len=this.childComponents.length; i<len; i++){
+			item = this.childComponents[i];
+			if(item == child){
+				return true;
+			}
+		}
+		return;
+	};
+	Composite.prototype.getChild = function(index){
+		if(index >=0 && index < this.childComponents.length){
+			return this.childComponents[index];
+		}
+		return null;
+	};
+	
+	//叶子对象
+	function Leaf(){
+		Component.call(this);
+	}
+	extend(Leaf,Component);
+	leaf.prototype.someOperation = function(){
+		//覆盖自定义，这里是具体的操作落地点
+	};
+	
+	var root = new Composite(),
+		a = new Leaf(),
+		b = new Leaf();
+	root.addChild(a);
+	root.addChild(b);
+	root.someOperation();
+	
+})();
+
+
+//section2:(父组件引用、删除某一层级、打印组合层次结构)
+(function(){
+	function Component(){
+		this.parent = null;
+	}
+	Component.prototype = {
+		getChildren: function(){
+			throw new Error('object does\'t support this method');
+		},
+		addChild: function(){},
+		removeChild: function(){},
+		getChild: function(){}
+	};
+	
+	function Composite(name){
+		this.childComponents = [];
+		this.name = name;
+	}
+	extend(Composite,Component);
+	Composite.prototype.addChild = function(child){
+		this.childComponents.push(child);
+		child.parent = this;
+	};
+	Composite.prototype.removeChild = function(child){
+		var idx = this.childComponents.indexOf(child);
+		if(idx !== -1){
+			for(var i=0,len=child.childComponents.length; i<len; i++){
+				var item = child.getChildren()[i];
+				item.parent = this;
+				this.childComponents.push(item);
+			}
+			this.childComponents.splice(idx,1);
+		}
+	};
+	Composite.prototype.getChildren = function(){
+		return this.childComponents;
+	};
+	Composite.prototype.printStruct = function(preStr){
+		console.log('preStr：' + this.name + '\n');
+		for(var i=1,len=this.childComponents.length; i<len; i++){
+			var item = this.childComponents[i];
+			item.printStruct(preStr);
+		}
+	};
+	
+	function Leaf(name){
+		this.name = name;
+	}
+	extend(Leaf,Composite);
+	Leaf.prototype.printStruct = function(preStr){
+		console.log(preStr + '-' + this.name);
+	};
+	
+	var root = new Composite('服装')，
+		c1 = new Composite('男装'),
+		c2 = new Composite('女装'),
+		leaf1 = new Leaf('衬衣'),
+		leaf2 = new Leaf('裙子');
+	root.addChild(c1);
+	root.addChild(c2);
+	c1.addChild(leaf1);
+	c2.addChild(leaf2);
+	root.removeChild(c1);
+	root.printStruct();
+})();
+
+
+//section3:(图片库)
+function ImageStore(id){
+	this.children = [];
+	this.element = document.createElement('div');
+	this.element.id = id;
+	this.element.className = 'imgs-store';
+}
+ImagesStore.prototype = {
+	constructor: ImageStore,
+	getChild: function(i){
+		return this.children[i];
+	},
+	add: function(child){
+		this.children.push(child);
+		this.element.appendChild(child.getElement());
+	},
+	remove: function(child){
+		for(var i=0,node=this.getChild(i),len=this.children.length; i<len; i++){
+			if(node == child){
+				this.children.splice(i,1);
+				break;
+			}
+			this.elements.removeChild(child.getElement());
+		}
+	},
+	show: function(){
+		this.element.style.display = '';
+		for(var i=0,node=this.getChild(i),len=this.children.length; i<len; i++){
+			node.show();
+		}
+	},
+	hide: function(){
+		this.element.style.display = 'none';
+		for(var i=0,node=this.getChild(i),len=this.children.length; i<len; i++){
+			node.hide();
+		}
+	},
+	getElement: function(){
+		return this.element;
+	}
+};
+//从上面的组合对象我们可以看出，原型上的show和hide方法不单单是对于当前的element进行处理，还延伸到其包含的
+每一个叶子对象上，这边就体现了组合模式的运行机制，一条命令在多个对象上激发复杂的或者递归的行为。在此处我们
+看到每一个对象的element属性都指向了该对象的实质DOM对象，一般来说不会有什么大问题，但是需要注意的是千万小心
+再将DOM对象中放入引用JS对象的属性（造成循环引用），这样会导致在一些浏览器中内存泄露，部分内存无法回收。
+function ImageItem(src){
+	this.element = document.createElement('img');
+	this.element.src = src;
+	this.element.className = 'img-item';
+}
+ImageItem.prototype = {
+	constructor: ImageItem,
+	add: function(child){
+		throw new Error('this is image object ,not add function');
+	},
+	remove: funtion(){},
+	getChild: function(){},
+	show: function(){
+		this.element.style.display = '';
+	},
+	hide: function(){
+		this.element.style.display = 'none';
+	},
+	getElement: function(){
+		return this.element;
+	}
+};
+var store = new ImageStore('first');
+store.add(new ImageItem('/img/1.jpg'));
+store.add(new ImageItem('/img/2.jpg'));
+
+
+//section4:
+var CompositeForm = function(id,method,action){
+	this.formComponents = [];
+	this.element = document.createElement('form');
+	this.element.id = id;
+	this.element.method = method || 'POST';
+	this.element.action = action;
+};
+CompositeForm.prototype.add = function(child){
+	this.formComponents.push(child);
+	this.element.appendChild(child.getElement());
+};
+CompositeForm.prototype.remove = function(child){
+	for(var i=0,len=this.formComponents.length; i<len; i++){
+		if(this.formComponents[i] == child){
+			this.formComponents.splice(i,1);
+			break;
+		}
+	}
+};
+CompositeForm.prototype.getChild = function(index){
+	return this.formComponents[index];
+};
+Composite.prototype.save = function(){
+	for(var i=0,len=this.formComponents.length; i<len; i++){
+		this.formComponents[i].save();
+	}
+};
+Composite.prototype.getElement = function(){
+	return this.element;
+};
+
+//Field叶子对象抽象类
+var Field = function(id){
+	this.id = id;
+};
+Field.prototype.add = function(){};
+Filed.prototype.remove = function(){};
+Field.prototype.getChild = function(){};
+Field.prototype.save = function(){
+	setCookie(this.id,this.getValue());
+};
+Field.protype.getElement = function(){
+	return this.element;
+};
+Field.prototype.getValue = function(){};
+
+//叶子对象类
+var InputField = function(id,label){
+	Field.call(this);
+	this.input = document.createElement('input');
+	this.input.id = id;
+	this.input.type = 'text';
+	this.label = document.createElement('label');
+	this.label.setAttribute('for',id);
+	var labelTextNode = document.createTextNode(label);
+	this.label.appendChild(labelTextNode);
+	
+	this.element = document.createElement('div');
+	this.element.className = 'input-field';
+	this.element.appendChild(this.label);
+	this.element.appendChild(this.input);
+};
+extend(InputField,Field);
+InputField.prototype.getValue = function(){
+	return this.input.value;
+};
+
+var SelectField = function(id,label,options){
+	Field.call(this);
+	this.select = document.createElement('select');
+	this.select.id = id;
+	this.label = document.createElement('label');
+	this.label.setAttribute('for', id);
+	var labelTextNode = document.createTextNode(label);
+	this.label.appendChild(labelTextNode); 
+	this.element = document.createElement('div');
+	this.element.className = 'select-field';
+	this.element.appendChild(this.label);
+	this.element.appendChild(this.select);
+};
+extend(SelectField,Field);
+SelectField.prototype.getValue = function(){
+	return this.select.options[this.select.selectedIndex].value;
+};
+
+var contactForm = new CompositeForm('contact-form','POST','contact.php');
+contactForm.add(new InputField('first-name','First name'));
+contactForm.add(new SelectField('state','State',{'GD':'guangdong','HB':'hubei'}));
+......
+document.body.appendChild(contactForm.getElement());
+
+个人体会：
+组合模式定义了基本对象和组合对象的类层次体系结构，在组合模式中基本对象可以被组合成复杂的组合对象，
+而组合对象又可以组合成更复杂的组合对象，可以不断地递归组合下去，从而形成一个统一的组合对象的层次结构。
+在享元模式中提到过组合模式的配合使用从而避免创建对象管理中心数据库，因为组合模式本身的对象层次体系
+中就已经存储了大量叶子对象。那对于组合模式而言，同样道理，如果有大量相似子组件对象并可以将其拆分出内外在
+数据的话可以借助享元模式以复用子组件（内在状态）从而节省内存开销。

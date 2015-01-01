@@ -1,0 +1,186 @@
+代理模式：
+代理，顾名思义就是帮别人做事，GOF对代理模式的定义如下：它是为其他对象提供一种代理以控制对这个对象的访问。
+其本质是控制对象访问，代理是一个对象，它可以用来控制对另一个对象的访问。它与另外那个对象实现了同样的接口，
+并且会把任何方法调用传递给那个对象。另外那个对象通常称为本体，代理可以代替其本体被实例化，并使其可以被远程
+访问。它还可以把本体的实例化推迟到真正需要的时候，对于实例化比较费时的本体，或者因为本身占用内存空间较大，】
+这种模式特别有用。在处理那些需要较长时间才能把数据载入用户界面的类，代理也大有好处。
+代理模式最基本的形式是对访问进行控制，代理对象和本体实现的是同样的接口，实际工作还是本体在做。它才是负责执行
+所分派任务的那个对象或类，代理对象所做的不外乎节制对本体的访问。要注意的是代理对象并不会在本体的基础上添加方法
+或修改其方法（就像装饰者模式那样），也不会简化那个对象的接口（就像门面模式那样）。它实现的接口与本体完全相同，
+所有对它进行的方法调用都会被传递给本体。
+
+(function(){
+	//目标对象，是真正被代理的对象
+	function Subject(){}
+	Subject.prototype.request = function(){};
+	
+	//代理对象
+	function Proxy(realSubject){
+		this.realSubject = realSubject;
+	}
+	Proxy.prototype.request = function(){
+		this.realSubject.request();
+	};
+})();
+
+//section1: 
+如何控制对本体的访问
+那种根本不实现任何访问控制的代理最简单。它所做的只是把所有方法调用传递到本体。这种代理毫无存在必要，但它也提供了
+一个进一步发展的基础。在下面的例子中，我们将创建一个代表图书馆的类。该类封装了一个Book对象
+var Publication = new Interface('Publication',['getIsbn','setIsbn','getTitle','setTitle','getAuthor','display']);
+var Book = function(isbn,title,author){
+	//implements publication
+};
+var Library = new Interface('Library',['findBooks','checkoutBook','returnBook']);
+var PublicLibrary = function(books){
+	//implement library
+	this.catalog = {};
+	for(var i=0,len=books.length; i<len; i++){
+		this.catalog[books[i].getIsbn()] = {
+			book: books[i],
+			available: true
+		};
+	}
+};
+PublicLibrary.prototype = {
+	findBooks: function(searchString){
+		var results = [];
+		for(var isbn in this.catalog){
+			if(!this.catalog.hasOwnProperty(isbn)){
+				continue;
+			}
+			if(searchString.match(this.catalog[isbn].getTitle()) || searchString.match(this.catalog[isbn].getAuthor())){
+				results.push(this.catalog[isbn]);
+			}
+		}
+		return results;
+	},
+	checkoutBook: function(book){
+		var isbn = book.getIsbn();
+		if(this.catalog[isbn]){
+			if(this.catalog[isbn].available){
+				this.catalog[isbn].available = false;
+				return this.catalog[isbn];
+			}
+			else{
+				throw new Error('this book is not currently available');
+			}
+		}
+		else{
+			throw new Error('this book is not found');
+		}
+	},
+	returnBook: function(book){
+		var isbn = book.getIsbn();
+		if(this.catalog[isbn]){
+			this.catalog[isbn].available = true;
+		}
+		else{
+			throw new Error('this book is not found');
+		}
+	}
+};
+/*
+	这个类非常简单，它可以用来查书，借书和还书。下面是一个没有实现任何访问控制的PublicLibrary类的代理：
+*/
+var PublicLibraryProxy = function(catalog){
+	this.library = new PublicLibrary(catalog);
+};
+PublicLibraryProxy.prototype = {
+	findBooks: function(searchString){
+		return this.library.findBooks(searchString);
+	},
+	checkoutBook: function(book){
+		return this.library.checkoutBook(book);
+	},
+	returnBook: function(book){
+		return this.library.returnBook(book);
+	}
+};
+
+//section2:
+/*
+	这种类型的代理没有什么好处，在各种类型的代理中，虚拟代理是最有用的类型之一。虚拟代理用于控制对那种创建开销很大的本体
+	的访问。它会把本体的实例化推迟到有方法被调用的时候，有时还会提供关于实例化状态的反馈。作为一个例子，假设PublicLibrary
+	的实例化很慢，不能在网页加载的时候立即完成。我们可以为其创建一个虚拟代理，让它把PublicLibrary的实例化推迟到必要的时候。
+*/
+var PublicLibraryVirtualProxy = function(catalog){
+	this.library = null;
+	this.catalog = catalog;
+};
+PublicLibraryVirtualProxy.prototype = {
+	_initializeLibrary: function(){
+		if(this.library == null){
+			this.library = new PublicLibrary(this.catalog);
+		}
+	},
+	findBooks: function(searchString){
+		this._initializeLibrary();
+		return this.library.findBooks(searchString);
+	},
+	checkoutBook: function(book){
+		this._initializeLibrary();
+		return this.library.checkoutBook(book);
+	},
+	returnBook: function(book){
+		this._initializeLibrary();
+		return this.library.returnBook(book);
+	}
+};
+/*
+	PublicLibraryProxy和PublicLibraryVirtualProxy之间的关键区别在于后者不会立即创建PublicLibrary的实例。PublicLibraryVirtualProxy
+	会把构造函数的参数保存起来。直到有方法调用时才真正执行本例的实例化。这样一来，如果图书馆对象一直未用到，那么它就不会被创建出来。
+	在本例中，方法调用就是触发因素
+*/
+
+//section3: 
+代理模式在许多方面很像装饰者，装饰者和虚拟代理都要对其他对象进行包装，都要实现与被包装对象相同的接口，而且都要把方法调用传递给被包装
+对象。最大区别在于装饰者会对被包装对象的功能进行修改和扩充，而代理只不过是控制对它的访问。除了有时可能会添加一些控制代码之外，代理并不
+会对传递给本体的方法调用进行修改。而装饰者模式就是为修改方法而生的。另一个区别在于被包装对象的创建方式上。在装饰者模式中，被包装对象的
+实例化过程是完全独立的，这个对象创建出来后可以随意为其裹上一个或者更多装饰者。而在代理模式中，被包装对象的实例化是代理的实例化过程的一
+部分。
+
+//section4:
+虚拟代理是一个对象，用于控制对一个创建开销昂贵的资源的访问。虚拟代理是一种优化模式。如果有些类或对象需要使用大量内存其数据，而你并不
+需要在实例化完成后立即访问这些数据，或者，其构造函数需要进行大量计算那就应该使用虚拟代理将设置开销的产生推迟到真正需要使用数据的时候。
+代理还可以在设置的进行过程中提供类似于“正在加载...”这样的消息，这可以形成一个反应积极的用户界面，以免让用户面对一个没有任何反馈的空白
+页面。远程代理则没有这样清楚的用例。如果需要访问某种远程资源的话，那么最好是用一个类或对象来包装它，而不是一遍又一遍地手工设置XMLHttpRequest
+对象。问题在于应该用什么类型的对象来包装这个资源呢？如果包装对象实现了远程资源的所有方法，那它就是一个远程代理。如果它会在运行期间增添
+一些方法，那它就是一个装饰者。如果它简化了该远程资源的接口，那它就是一个门面。远程代理是一种结构型模式，它提供了一个访问位于其他环境中
+的资源的原生JS API.总而言之，如果有些类或者对象的创建开销比较大，而且不需要在实例化完成后立即访问器数据，那么应该使用虚拟代理。如果你有
+某种远程资源，并且要为资源提供的所有功能实现对应的方法，那么应该使用远程代理。
+
+var SimpleHandler = function(){
+	//implements AjaxHandler
+};
+SimpleHandler.prototype = {
+	createXhrObject: function(){
+		var methods = [
+			function(){
+				return new XMLHttpRequest();
+			},
+			function(){
+				return new ActiveXObject();
+			},
+			function(){
+				return new ActiveXObject();
+			}
+		];
+		for(var i=0,len=methods.length; i<len; i++){
+			try{
+				methods[i]();
+			}
+			catch(e){
+				continue;
+			}
+		}
+		this.createXhr
+	},
+	request: function(methold,url,callback,postVars){
+		var xhr = this.createXhrObject();
+		xhr.onre
+	}
+};
+
+
+

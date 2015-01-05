@@ -251,7 +251,204 @@ var StatsProxy = (function(){
 		}
 		xhrHandler.request('GET',url,callback);
 	}
-	return {};
+	return {
+		getPageViews: function(callback,startDate,endDate,page){
+			fetchData(urls.pageViews,callback,startDate,endDate,page);
+		},
+		getUniques: function(callback,startDate,endDate,page){
+			fetchData(urls.uniques,callback,startDate,endDate,page);
+		},
+		getBrowserShare: function(callback,startDate,endDate,page){
+			fetchData(urls.browserShare,callback,startDate,endDate,page);
+		},
+		getMostVisitedPages: function(callback,startDate,endDate,page){
+			fetchData(urls.mostVisitedPages,callback,startDate,endDate,page);
+		}
+	};
 })();
+
+/*
+	现在实现代码与web服务的耦合变得更加松散，而重复性代码也大大减少了。对待StatusProxy对象与对待别的JS对象没什么两样，你可以随意用它进行查询。
+	不过这的确暴露了这种方法的一个弊端。远程代理，根据其定义，应该能掩盖数据的实际来源，即使你可以将其视为本地资源，它实际上还是要对服务器进行
+	访问，根据用户的链接速度，这种访问耗费的时间少则几毫秒，多则几秒。在设计远程代理时，注明一下这种性能问题很有必要。在本例中这个问题可以通过
+	借助回调函数进行异步调用稍加缓解，这样程序的执行就不会因为要等待调用结果而被阻塞。但是回调函数的存在多少暴露了一些下层的实现细节，因为如果
+	不与外部服务通信的话是不需要使用回调函数的
+*/
+
+//section5:包装web服务的通用模式
+我们可以从上面的例子中提炼出一个更加通用的web服务包装模式。由于JS的同源性限制，web服务代理所包装的服务必须部署在使用代理的网页所在的域中。这里
+使用一个构造函数的普通类，以便以后进行拓展。
+var webserviceProxy = function(){
+	this.xhrHandler = new SimpleHandler();
+};
+webserviceProxy.prototype = {
+	_xhrFailure: function(){
+		throw new Error('statsProxy: async request for stats failed');
+	},
+	_fetchData: function(url,dataCallback,getVars){
+		var that = this;
+		var callback = {
+			success: function(responseText){
+				var obj = eval('(' + responseText + ')');
+				dataCallback(obj);
+			}
+		};
+		var getVarArray = [];
+		for(var name in getVars){
+			getVarArray.push(name + '=' + getVars[name]);
+		}
+		if(getVarArray.length > 0){
+			url = url + '?' + getVarArray.join('&');
+		}
+		this.xhrHandler.request('GET',url,callback);
+	}
+};
+//使用这个通用模式时，只需要从webserviceProxy派生一个子类，然后借助_fetchData方法实现需要的方法即可：
+var statsProxy = function(){
+	statsProxy.superclass.constructor.call(this);
+};
+function extend(subClass,superClass){
+	var F = function(){};
+	F.prototype = superClass.prototype;
+	subClass.prototype = new F();
+	subClass.prototype.constructor = subClass;
+	subClass.superClass = superClass.prototype;
+	if(superClass.prototype.constructor == Object.prototype.constructor){
+		superClass.prototype.constructor = superClass;
+	}
+}
+extend(statsProxy,webserviceProxy);
+statsProxy.prototype.getPageviews = function(callback,startDate,endDate,page){
+	this._fetchData('test.json',callback,{
+		'startDate' : startDate,
+		'endDate' : endDate,
+		'page' : page
+	});
+};
+statsProxy.prototype.getUniques = function(callback,startDate,endDate,page){
+	this._fetchDate('/stats/getUniques/',callback,{
+		'startDate' : startDate,
+		'endDate' : endDate,
+		'page' : page
+	});
+};
+
+
+//section6
+这次的任务是为公司网站的主页添加一个可搜索的员工目录，它应该模仿时间的员工花名册的页面，从A开始，显示其姓氏以特定字母开头的所有员工。
+由于这个网页的访问量很大，所以这个解决方法必须尽量节约带宽。因为这个问题中网页的大小很重要，所以我们决定只为那些需要查看员工资料的用户
+加载这种数据，这样一来，那些不关心这种信息的用户就不用下载额外的数据。这是虚拟代理可以大显身手的地方，因为它能够把需要占用大量带宽的资源
+的加载推迟到必要的时候。首先要做的是创建代理的那个本体类，它负责获取员工数据并生成，用于在网页上显示这些数据的HTML内容
+
+var Directory = new Interface('Directory',['showPage']);
+var PersonalDirectory = function(parent){
+	this.xhrHandler = new SimpleHandler();
+	this.parent = parent;
+	this.data = null;
+	this.currentPage = null;
+	var that = this;
+	var callback = {
+		success: that._configure,
+		failure：function(){
+			throw new Error('personalDirectory: failure in data retrieval');
+		}
+	};
+	xhrHandler.request('GET','directoryData.php',callback);
+};
+PersonalDirectory.prototype = {
+	_configure: function(responseText){
+		this.data = eval('('+ responseText +')');
+		this.currentPage = 'a';
+	},
+	showPage: function(page){
+		$('page-' + this.currentPage).style.display = 'none';
+		$('page-' + page).style.display = 'block';
+		this.currentPage = page;
+	}
+};
+/*
+	该类的构造函数会发出一个xhr请求以获取员工数据，其一configure方法会在数据返回的时候被调用，它会生成HTML元素并向其中填入数据，该类实现了一个目录
+	应有的所有功能。这个类的实例化过程中会加载大量数据、代理的作用就是推迟这个实例化过程。
+*/
+//下面先勾勒出虚拟代理的大体轮廓，它包含了该类需要的所有方法
+var DirectoryProxy = function(){};
+Directory.prototype = {
+	showPage: function(){}
+};
+
+//下一步是先将这个类实现为一个无用的代理，它的每个方法所做的只是调用本体的同名方法
+var DirectoryProxy = function(){
+	this.directory = new PersonalDirectory(parent);
+}
+Directory.prototype = {
+	showPage: function(page){
+		return this.directory.showPage(page);
+	}
+};
+//现在这个代理可以代替PersonalDirectory的实例使用，它们可以透明互换，不过在此情况下你丝毫没有享受到虚拟代理的好处，要想发挥
+虚拟代理的作用，需要创建一个用来实例化本体的方法，并注册一个用来触发这个实例化过程的事件侦听器
+
+var DirectoryProxy = function(parent){
+	this.parent = parent;
+	this.directory = null;
+	var that = this;
+	addEvent(parent,'mouseover',function(){
+		that._initialize();
+	});
+};
+DirectoryProxy.prototype = {
+	_initialize: function(){
+		this.directory = new PersonalDirectory(this.parent);
+	},
+	showPage: function(page){
+		return this.directory.showPage(page);
+	}
+};
+//在本例中，一旦用户把鼠标指针移到目录的父容器上方，本体就会被实例化。在更复杂的解决方案中，可以先为目录生成一个空白的用户界面，
+一旦某个表单域处于焦点之下，它就会被初始化后的本体透明地取代。这个例子已经接近于完工。剩下的任务只有一件，那就是提示用户当前正在
+加载员工目录，并且在本体创建完毕之前阻止任何方法调用：
+var DirectoryProxy = function(parent){
+	this.parent = parent;
+	this.directory = null;
+	this.warning = null;
+	this.interval = null;
+	this.initialized = false;
+	var that = this;
+	addEvent(parent,'mouseover',function(){
+		that._initialize();
+	});
+};
+DirectoryProxy.prototype = {
+	_initialize: function(){
+		this.warning = document.createElement('div');
+		this.parent.appendChild(this.warning);
+		this.warning.innerHTML = 'the company directory is loading...';
+		this.directory = new PersonalDirectory(this.parent);
+		var that = this;
+		this.interval = setInterval(function(){
+			that._checkInitialization();
+		},100);
+	},
+	_checkInitialization: function(){
+		if(this.directory.currentPage !== null){
+			clearInterval(this.interval);
+			this.initialized = true;
+			this.parent.removeChild(this.warning);
+		}
+	},
+	showPage: function(){
+		if(!this.initialized){
+			return;
+		}
+		return this.directory.showPage(page);
+	}
+};
+代理模式之利：
+虚拟代理可以用来把大对象的实例化推迟到其他元素加载完毕之后。如果虚拟代理包装的资源没有被用到那么它根本不会被加载。虚拟代理的好处就在于，
+你可以用它代替主体，而不用操心实例化开销的问题。
+代理模式之弊：
+代理可以掩盖大量复杂行为，这会带来不必要的复杂性和代码。因为代理与其本体完全可以互换。在为创建一个代理费心劳力之前，请确保你确实需要它
+提供的特性。且它能降低你的代码的冗余程度，提高其模块化或者运行效率
+
 
 

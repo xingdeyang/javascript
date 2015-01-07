@@ -110,30 +110,67 @@ AcmeComfortCruiser.prototype = {
 	assemble: function(){},
 	wash: function(){},
 	ride: function(){},
-	repair: function(){}
-};
-
-/*为避免生成许多AcmeComfortCruiser的实例，我们在实例化或者生成AcmeComfortCruiser对象时考虑使用单例模式*/
-
-var BicycleDecorator = function(bicycle){
-	this.bicycle = bicycle;
-};
-BicycleDecorator.prototype.decorate = function(name){
-	var overrides = this.constructor.decorators[name];
-	for(var i in overrides){
-		if(overrides.hasOwnProperty(i)){
-			this.bicyle[i] = overrides[i];
-		}
+	repair: function(){},
+	getPrice: function(){
+		return 399;
 	}
-	return this.bicycle;
-}:
-BicycleDecorator.decorators = {};
-BicycleDecorator.decorators.tailLight = {
-	//尾灯功能...
 };
-BicycleDecorator.decorators.headLight = {
-	//前灯功能...
-};
+
+/*
+	这些选件类的作用基本上就是传递发生在它们身上的方法调用。为了简化这个任务，也为了方便以后增添更多选件，
+	我们将创建一个抽象类BicyleDecorator,所有选件从此派生。它提供了Bicycle接口所要求的各个方法的默认版本。
+*/
+	var BicyleDecorator = function(bicycle){
+		this.bicycle = bicycle;
+	};
+	BicycleDecoratro.prototype = {
+		assemble: function(){
+			this.bicycle.assemble();
+		},
+		wash: function(){
+			this.bicycle.wash();
+		},
+		ride: function(){
+			this.bicycle.ride();
+		},
+		repair: function(){
+			this.bicycle.repair();
+		},
+		getPrice: function(){
+			this.bicycle.getPrice();
+		}
+	};
+	
+/*
+	它的构造函数接受一个对象参数，并将其作为装饰者的组件（写到这里怎么感觉和代理模式很相似，哈哈，但是有区
+	别的具体可以查看代理模式中讲述），该类实现了bicycle接口，它所实现的每一个方法所做的只是在其组件上调用
+	同名方法。BicycleDecorator类是所有选件类的超类。这与组合模式非常类似（组合模式中具体组合类也是需要一个
+	基类让具体组合类去继承的,因为API相对固定）。对于那些不需要装饰的方法，选件类只要使用从BicycleDecorator
+	继承而来的版本即可，而这些方法又会在组件上调用同样的方法，因为选件类对于任何客户代码都是透明的。有了
+	BicycleDecorator,创建各种选件类很容易，只需继承并改写某些方法即可。
+*/
+	var HeadLightDecorator = function(bicycle){
+		BicyleDecorator.call(this,bicycle);
+	};
+	extend(HeadLightDecorator,BicyleDecorator);
+	HeadLightDecorator.prototype.assemble = function(){
+		return this.bicycle.assemble() + 'attach headlight to hadnlerbars';
+	};
+	HeadLightDecorator.prototype.getPrice = function(){
+		return this.bicycle.getPrice() + 15.00;
+	};
+	
+/*
+	使用装饰者，要创建一个带前灯的自行车，首先应该创建自行车的实例，然后以该自行车对象为参数实例化前灯选件。
+	在此之后，应该只是用这个HeadLightDecorator对象，你完全可以将其实例化为一辆自行车，而把它是一个装饰者对象
+	抛之脑后
+*/
+	var bicycle = new AcmeComfortCruiser();
+	console.log(bicycle.getPrice());
+	myBicycle = new HeadLightDecorator(bicycle);
+	console.log(myBicycle.getPrice());
+	
+	
 
 	心得体会：装饰者模式其实就是无需为每个功能组合创建一个子类，就可以解决在一个类上添加和更改功能的问题。
 	装饰者模式和组合模式的比较：

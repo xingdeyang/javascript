@@ -170,6 +170,44 @@ AcmeComfortCruiser.prototype = {
 	myBicycle = new HeadLightDecorator(bicycle);
 	console.log(myBicycle.getPrice());
 	
+/*
+	这里用来存放HeadLightDecorator实例的不是另一个变量，而是用来存放自行车实例的同一变量。这意味着此后将不能再访问
+	原来的那个自行车对象，不过没关系你以后不再需要这个对象。这个装饰者完全可以和自行车对象互换使用。这也意味着你可以
+	随心所欲地嵌套使用多种装饰者。假如你创建一个TailLightDecorator类，那么可以将其与HeadLightDecorator组合使用：
+*/
+	var TailLightDecorator = function(bicycle){
+		BicyleDecorator.call(this,bicycle);
+	};
+	extend(TailLightDecorator,BicyleDecorator);
+	TailLightDecorator.prototype.assemble = function(){
+		return this.bicycle.assemble() + 'attach tailLight to the seat post';
+	};
+	TailLightDecorator.prototype.getPrice = function(){
+		return this.bicycle.getPrice() + 9.00;
+	};
+	
+	var myBicycle = new AcmeComfortCruiser();
+	console.log(myBicycle.getPrice());
+	myBicycle = new TailLightDecorator(myBicycle);
+	console.log(myBicycle.getPrice());
+/*
+	你可以如法炮制，创建对应于前挂货篮和铃铛的装饰者。通过在运行期间动态应用装饰者，可以创建出具有所需要的特性的对象，而不用
+	去维护那100个不同子类。要是前灯的价格发生变化，你只要在HeadLightDecorator类这一个地方予以更新即可。维护的工作因此也更容易
+	管理得多。
+*/
+
+/*
+	装饰者模式颇多得益于接口的使用。装饰者最重要的特点之一就是用来替代组件。在本例中，这就说任何原来AcmeComfortCruiser实例的
+	地方，都可以使用使用HeadLightDecorator实例，为此不必对代码进行任何修改。这是通过确保所有装饰者对象都实现了Bicycle接口而
+	达到的。接口在此发挥了两个方面的作用。首先，它明确了装饰者必须实现哪些方法，这有助于防止开发过程中的错误。通过创建一个具有
+	一批固定方法的接口，你所面对的不再是一个游移不定的目标。此外，它还可以在新版工场方法中用来确保所创建的对象都实现了必须的方法。
+	如果装饰者与其组件不能互换使用，它就丧失了其功能。这是装饰者模式的要点，要注意防止装饰者和组件出现接口方面的差异。这种模式的
+	好处之一就是透明地用新对象装饰现有系统中的对象。而这并不会改变代码中的其他东西。只有装饰者和组件实现了同样的接口才能做到这一点，
+	写到这里想到一个比较形象的比喻，装饰者模式其实就是人穿衣服，一层一层的装饰，衣服的件数（装饰者）是固定的，但搭配装饰的种类却非
+	常多，最初的组件可以看做是躶体的人，而每件衣服都可以看做是一个装饰者，而每个装饰后的对象又可以作为其他装饰者的组件。就好比人穿
+	了内衣后又可以穿外衣来装饰。这样在穿衣时知道有哪些衣服（装饰者），就可以随心所欲去一件一件搭配（装饰）而形成最终的对象。
+*/
+	
 	
 
 	心得体会：装饰者模式其实就是无需为每个功能组合创建一个子类，就可以解决在一个类上添加和更改功能的问题。

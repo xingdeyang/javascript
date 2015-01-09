@@ -237,10 +237,151 @@ myBicycle = new TailLightDecorator(myBicycle);
 console.log(myBicycle.getPrice());
 
 /*
-	在方法之前添加行为，如果行为修改发生在执行组件方法之前，那么要么必须把装饰者行为安排在调用组件方法之前，要么必须设法修改传递给组件方法
-	的参数值。下面的例子实现了一个提供车架颜色选择的装饰者：
+	在方法之前添加行为，如果行为修改发生在执行组件方法之前，那么要么必须把装饰者行为安排在调用组件方法之前，要
+	么必须设法修改传递给组件方法的参数值。下面的例子实现了一个提供车架颜色选择的装饰者：
+*/
+var FrameColorDecorator = function(bicycle,frameColor){
+	BicycleDecorator.call(this,bicycle);
+	this.frameColor = frameColor;
+};
+extend(FrameColorDecorator,BicycleDecorator);
+FrameColorDecorator.prototype.assemble = function(){
+	return 'paint the frame' + this.frameColor + 'and allow it to dry' + this.bicycle.assemle();
+};
+FrameColorDecorator.prototype.getPrice = function(){
+	return this.bicycle.getPrice() + 30.00;
+};
+var myBicycle = new AcmeComfortCruiser();
+myBicycle = new FrameColorDecorator(myBicycle,'red');
+myBicycle = new HeadLightDecorator(myBicycle);
+myBicycle = new TailLightDecorator(myBicycle);
+console.log(myBicycle.assemble());
+
+/*
+	替换方法，有时为了实现新行为必须对方法进行整体替换。在此情况下，组件方法不会被调用。下面我们将创建一个用来实现
+	自行车的终生保养的装饰者：
+*/
+var LifetimeWarrantDecorator = function(bicycle){
+	BicycleDecorator.call(this,bicycle);
+};
+extend(LifetimeWarrantDecorator,BicycleDecorator);
+LifetimeWarrantDecorator.prototype.repair = function(){
+	return 'this bicycle is coverred by a lifetime warranty.';
+};
+LifetimeWarrantDecorator.prototype.getPrice = function(){
+	return this.bicycle.getPrice() + 199.00;
+}:
+/*
+	这个装饰者把组件的repair方法替换为一个新方法，而组件的方法再也不会被调用。装饰者也可以根据某种条件决定是否替换组件
+	方法，在条件满足时替换方法，否则就用组件方法。
+	添加新方法：
+	前面的例子中所讲的修改都发生在接口所定义的方法中，但这并不是一种必然的要求。装饰者也可以定义新方法，不过要想稳妥的实现
+	这一点并不容易，要想使用这些新方法，外围代码必须知道有这样一些新方法。由于这些新方法并不是在接口中定义的，而且他们是
+	动态添加的，因此有必要进行类型检查，以验证用于包装组件对象的最外层装饰者。与用新方法装饰组件对象相比，对现有方法进行修改
+	更容易实施，而且更不容易出错，这是因为采用后一种做法时，被装饰的对象用起来与之前没有什么不同，外围代码也就不需要修改。
+	在装饰者中添加新方法有时也是为类增添功能的一种强有力手段。我们可以用这种装饰者为自行车对象增添一个按铃方法。这是一个新
+	功能，没有装饰者自行车就不可能执行这个任务：
+*/
+var BellDecorator = function(bicycle){
+	BicycleDecorator.call(this,bicycle);
+};
+extend(BellDecorator,BicycleDecorator);
+BicycleDecorator.prototype.assemble = function(){
+	return this.bicycle.assemble() + 'attach bell to handlebars';
+};
+BicycleDecorator.prototype.getPrice = function(){
+	return this.bicycle.getPrice() + 6.00;
+};
+BicycleDecorator.prototype.ringBell = function(){
+	return 'bell rung';
+};
+/*
+	这与先前讲过的装饰者非常相似，差别只在于它实现了ringBell这个未见于接口中的方法
+*/
+var myBicycle = new AcmeComfortCruiser();
+myBicycle = new BellDecorator(myBicycle);
+console.log(myBicycle.ringBell());
+
+
+//section5:
+工场的角色：如果必须确保某种特定顺序，那么可以为此使用工场对象。实际上，不管顺序是否要紧，工场都很适合于创建装饰对象。本节将重写
+AcmeBicycleShop类的createBicycle方法，以便于用户可以指定自行车要配的选件。这些选件将被转化为装饰者，并在方法返回之前被应用到新创建
+的自行车对象上。
+var AcmeBicycleShop = function(){};
+extend(AcmeBicycleShop,BicycleShop);
+AcmeBicycleShop.prototype.createBicycle = function(model){
+	var bicycle;
+	switch(model){
+		case 'the speedster' : bicycle = new AcmeSpeedster(); break;
+		case 'the lowrider': bicycle = new AcmeLowrider(); break;
+		case 'the faltlander': bicycle = new AcmeFlatLaner(); break;
+		default: bicycle = new AcmeComfortCruiser();
+	}
+	return bicycle;
+};
+
+/*
+	这个类的改进版允许用户指定香味自行车的选件。在这里，使用工场模式可以统揽各种类。把所有信息保存在一个地方，用户就可以把实际类名与
+	客户代码隔离开，这样以后添加新类或修改现有类就更容易。
+*/
+var AcmeBicycleShop = function(){};
+extend(AcmeBicycleShop,BicycleShop);
+AcmeBicycleShop.prototype.createBicycle = function(model,options){
+	var bicycle = new AcmeBicycleShop.models[model]();
+	
+	for(var i=0,len=options.length; i<len; i++){
+		var decorator = AcmeBicycleShop.options[options[i].name];
+		if(typeof decorator !== 'function'){
+			throw new Error('decorator not found');
+		}
+		var argument = option[i].arg;
+		bicycle = new Decorator(bicycle,argument);
+	}
+	return bicycle;
+};
+
+AcmeBicycleShop.models = {
+		'the speeder' : AcmeSpeedster,
+		'the lowrider' : AcmeLowrider,
+		'the flatLander' : AcmeFlatlander,
+		'the comfort cruiser' : AcmeComfortCruiser
+};
+AcmeBicycleShop.options = {
+	'headlight' : HeadLightDecorator,
+	'taillight' : TailLightDecorator,
+	'bell' : BellDecorator,
+	'basket' : BasketDecorator
+};
+/*
+	用工场实例化自行车对象有很多好处，首先不必了解自行车和装饰者的各种类名，所有这些信息都封装在AcmeBiccleShop类中。因此添加自行车型号和选件非常容易，
+	只要把它们添加到AcmeBicycleShop.models和AcmeBicycleShop.options数组中即可
 */
 
+
+//section6
+函数装饰者：装饰者不局限于类，你也可以创建用来包装独立的函数和方法的装饰者，下面是一个简单的函数装饰者的例子，这个装饰者包装了另一个函数，其作用在于将
+被包装者的返回结果改为大写形式：
+function upperCaseDecorator(func){
+	return function(){
+		return func.apply(this,arguments).toUpperCase();
+	};
+}
+
+//section7
+装饰者模式的适用场合：
+如果需要为类增添特性或职责，而从该类派生子类的解决方法并不实际的话，就应该使用装饰者模式。派生子类之所以不实际，最常见的原因是需要增添的特性的数量和组合
+要求使用大量子类。自行车商店的例子就说明了这一点，这个例子中涉及7种不同的自行车选件，其中一些选件你还可以应用多次，这意味着如果不采用装饰者模式的话，要
+达到同样的目的需要数以千计的子类。从这个意义上讲，装饰者模式甚至可以视为一种优化模式，因为在此场合下它节省的代码量可到几个数量级。如果需要为对象增加特性
+而又不想要改变使用该对象的代码的话，也可以采用装饰者模式。因为装饰者可以动态而又透明地修改对象，所以他们很适合修改现有系统这一任务。相比卷入创建和维护
+子类的麻烦，创建和应用一些装饰者往往要省事得多。
+装饰者模式之利：
+装饰者是运行期间为对象增添特性或者职责的有力工具。在自行车那个例子中，通过使用装饰者，你可以动态地为自行车对象添加可选的特色配件。在只有部分对象需要这些
+特性的情况下装饰者模式的好处尤为突出。如果不采用这种模式，那么要想实现同样的效果必须使用大量子类。装饰者的运作过程是透明的，这就是说你可以用它包装其他
+对象，然后继续按之前使用那些对象的方法来使用它。在为现有对象添砖加瓦这方面，装饰者为程序员带来了极大的灵活性。
+装饰者模式之弊：
+装饰者模式的缺点主要体现在使用装饰者模式往往会增加架构的复杂度，这种模式常常要引入许多小对象，他们看起来比较相似，而实际功能却大相径庭。装饰者模式往往
+不太容易理解，对于那些不熟悉这种模式的开发人员而言尤其如此。在设计一个使用了装饰者模式的架构时，你必须多花写心思，确保自己的代码有良好的文档说明并且容易
+理解。
 	
 	
 

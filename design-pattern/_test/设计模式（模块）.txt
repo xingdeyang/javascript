@@ -223,4 +223,52 @@
 	var flag3 = lt3.login(nlm);
 	console.log('可以进行普通人员加强版登录' + flag3);
 	
+	
+//教你如何冲咖啡
+	(function(){
+		var CoffeeBeverage = function(){};
+		CoffeeBeverage.prototype = {
+			/*
+				模板方法，这个例子中算法是用来制作咖啡的
+			*/
+			prepareRecipe: function(){
+				this.boilWater();
+				this.brew();
+				this.pourInCup();
+				this.addConditions();
+			},
+			brew: function(){
+				throw new Error('abstract addConditions method should be written');
+			},
+			boilWater: function(){
+				console.log('boil water');
+			},
+			pourInCup: function(){
+				console.log('pouring into cup');
+			}
+		};
+		
+		var Tea = function(){};
+		Tea.prototype = {
+			__proto__: CoffeeBeverage.prototype,
+			brew: function(){
+				console.log('Dripping coffee through filter');
+			},
+			addConditions: function(){
+				console.log('addding sugar and milk');
+			}
+		};
+		
+		var myTea = new Tea();
+		myTea.prepareRecipe();
+	})();
+	
+	//由coffeeBeverage类主导一切，它拥有算法，而且保护这个算法。对子类来说，coffeeBeverage类deep存在，可以将代码的复用
+	最大化，算法只存在于一个地方，所以容易修改。这个模板方法提供了一个框架，可以让其他的咖啡饮料插进去，新的咖啡饮料
+	只要实现自己的方法就可以了。CoffeeBeverage类专注在算法本身，而由子类提供完整的实现。
+	
+	好莱坞原则：别调用我们，我们会调用你
+	在好莱坞原则下，我们允许低层组件将自己挂钩到系统上，但是高层组件会决定什么时候和怎样使用这些组件。换句话说，高层组件
+	对待低层组件的方式是“别调用我们，我们会调用你”
+	
 

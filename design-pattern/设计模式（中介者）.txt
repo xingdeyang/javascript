@@ -1,0 +1,463 @@
+中介者模式：mediator
+中介者模式是一个行为设计模式，使我们可以导出统一的接口，这样系统不同部分就可以彼此通信。
+如果系统组件之间存在大量的直接关系，那不同组件间的关系就过于杂乱不可维护（如机场塔台存在）
+且有些场景下需要权限访问控制及错误处理机制，这就可能是时候使用一个中心的控制点，来让不同
+的组件通过它进行通信。中介者模式通过将组件之间显示或直接的引用替换成通过中心点来交互的方
+式做到松散耦合，这样可以帮助我们解耦和改善组件的重用性，这其实也是中央集权的控制中心特征。
+雅虎前端工程师提到过一种可伸缩的javascript架构（scalable javascript application architecture），
+见图mediator.png,在这种架构模型中中介者无非是整个架构的核心模式。
+
+//section1:
+在本系列中我写过观察者模式的一个实际产品案例，这里重复下
+S.MQ = {
+		_handlers: {},
+		_topics: function(topics){
+			return topics.indexOf(',') == -1 ? [topics] : topics.replace(/\s/g,function(){return '';}).split(',');
+		},
+		_topicExist: function(topic){
+			if(this._handlers.hasOwnProperty(topic) && this.handlers[topic].length > 0){
+				return true;
+			}
+			return;
+		},
+		_each: function(array,processor){
+			var item;
+			for(var i=0,len=array.length; i<len; i++){
+				item = array[i];
+				processor(item,i);
+			}
+		},
+		sub: function(topic,handler){
+			var me = this;
+			this._each(me._topics(topic),function(item,i){
+				if(me._topicExist(item)){
+					me._handlers[item].push(handler);
+				}
+				else{
+					me._handlers[item] = [handler];
+				}
+			});
+		},
+		pub: function(topic,data){
+			var me = this;
+			this._each(this._topics(topic),function(topic){
+				if(this._topicExist(topic)){
+					me._each(me._handlers[topic],function(handler){
+						handler({topic:topic,data:data});
+					});
+				}
+				else{
+					log('the topic' + topic + 'is not exist');
+				}
+			});
+		},
+		unsub: function(topic,handler){
+			var me = this;
+			this._each(this._topics(topic),function(topic){
+				if(me._topicExist(topic)){
+					me._each(me._handlers[topic],function(item,i){
+						if(item == handler){
+							me._handlers[topic].splice(i,1);
+						}
+					});
+				}
+				else{
+					log('the topic' + topic + 'is not exist');
+				}
+			});
+		},
+		hasSub: function(topic){
+			return this._topicExist(topic);
+		}
+	};
+	
+	其实将这个案例放在观察者模式中是不恰当的现在看来，而是应该作为中介者模式的案例。我们可以回顾下观察者模式的定义是一个被称作被观察者的对象，
+	维护一组被称为观察者的对象，这些对象依赖于被观察者，被观察者自动将自身的状态的任何变化通知给他们。当被观察者
+	需要将一些变化通知给观察者的时候，它将采用广播的方式，这条广播可能包含特定于这条通知的一些数据（这里由于具体
+	通知数据的不同我们又可以将观察者模式划分为推和拉两种模型）。比如小明妈妈叫小明回家吃饭的例子，在观察者模式中被
+	观察者是明确知道观察者的存在且可以直接调用的（也即显示引用），这是单向的，常见是一对多的模式，这点是区分观察者模式和中介者模式
+	最为重要的一点。而飞机通信的场景中，飞机之间是存在互相观察和被观察的关系的，并不是单向的，况且大部分情况下是多
+	对多的关系（还比如组件间的通信），那这种场景下还是用观察者模式就显得非常杂乱无序且不可控。但还特别要注意区分中介者
+	和观察者模式的一点是，如果我们把一个同事对象和一个中介者放在一起来看其实是一种观察者模式，所以中介者模式在某种意义
+	上来讲是N组观察者模式的组合（中介者对象是观察者，同事对象是被观察者）。
+	
+	
+	//section2:
+	如何实现同事（也就是不同组件）和中介者的通信呢？
+	一种方式是在mediator接口中定义一个特殊的通知接口，作为一个通用的方法来让各个同事调用。例如定义了一个通用的changed
+	方法，并且把同事对象作为参数传入，这样在中介者对象里面就可以去获取这个同事对象的实例数据了(要注意的是既然中介者作为
+	控制中心节点，所以mideator对象是必须要知道所有同事对象的，就像每个机场的塔台是知道在该机场起降的所有飞机对象的)。
+	另一种方式就是利用观察者来辅助实现（上述section1代码是一种方式），也可以把mediator实现成观察者，而各个同事实现成被观
+	察者，这样同事发生了变化，就会通知mediator。Mediator收到通知后，会与相应的同事对象进行交互。
+	
+	
+	//section3:(大致实现代码)
+	function Colleague(mediator){
+		this.mediator = mediator;
+	}
+	Colleague.prototype = {
+		getMediator: function(){
+			return this.mediator;
+		}
+	};
+	
+	//同事类
+	function ColleagueA(mediator){
+		Colleague.apply(this,arguments);
+	}
+	extend(ColleagueA,Colleague);
+	ColleagueA.prototype.someOperation = function(){
+		this.getMediator().changed(this);
+	};
+	
+	//中介者
+	function Mediator(){
+		var colleagueSets = [];
+		this.setColleague = function(colleague){
+			colleagueSets.push(colleague);
+		};
+		this.changed = function(colleague){
+			//传入的同事发生了变化，需要与其他同事交互
+			//具体协调相应的同事对象来实现协作行为
+		}
+	}
+	
+	
+	//section4:
+	(function(){
+		var Colleague = function(mediator){
+			this.mediator = mediator;
+		};
+		Colleague.prototype.getMediator = function(){
+			return this.mediator;
+		};
+		
+		//光驱类
+		var CDDriver = function(){
+			Colleague.apply(this,arguments);
+			this.data = '';
+		};
+		extend(CDDriver,Colleague);
+		CDDriver.prototype.getData = function(){
+			return this.data;
+		};
+		CDDriver.prototype.readCD = function(){
+			this.data = 'cddriver data';
+			this.getMediator.changed(this);
+		};
+		
+		//cpu类
+		var CPU = function(){
+			Colleague.apply(this,arguments)；
+			this.videoData = '';
+			this.soundData = '';
+		};
+		extend(CPU,Colleague);
+		CPU.prototype.getVideoData = function(){
+			return this.videoData;
+		};
+		CPU.prototype.getSoundData = function(){
+			return this.soundData;
+		};
+		CPU.prototype.executeData = function(data){
+			var ss = data.split(',');
+			this.videoData = ss[0];
+			this.soundData = ss[1];
+			this.getMediator().changed(this);
+		};
+		
+		//显卡类
+		var VideoCard = function(){
+			Colleague.apply(this,arguments);
+		};
+		extend(VideoCard,Colleague);
+		VideoCard.prototype.showData = function(data){
+			console.log('您正在观看的是' + data);
+		};
+		
+		//显卡类
+		var SoundCard = function(){
+			Colleague.apply(this,arguments);
+		};
+		extend(SoundCard,Colleague);
+		SoundCard.prototype.soundData = function(data){
+			console.log('您正听到的是' + data);
+		};
+		
+		//中介者对象接口
+		var Mediator = function(){};
+		Mediator.prototype.changed = function(colleague){};
+		
+		var MotherBoard = function(){};
+		MotherBoard.prototype.setCdDriver = function(cdDriver){
+			this.cdDriver = cdDriver;
+		};
+		MotherBoard.prototype.setCpu = function(cpu){
+			this.cpu = cpu;
+		};
+		MotherBoard.prototype.serVideoCard = function(videoCard){
+			this.videoCard = videoCard;
+		};
+		MotherBoard.prototype.setSoundCard = function(soundCard){
+			this.soundCard = soundCard;
+		};
+		MotherBoard.prototype.changed = function(colleague){
+			switch(colleague){
+				case this.cdDrier: this.opeCDDriverReadData(cd); break;
+				case this.cpu: this.opeCPU(cpu); break;
+				default: break;
+			}
+		};
+		MotherBoard.prototype.opeCDDriverReadData = function(cd){
+			this.cpu.executeData(cd.getData);
+		};
+		MotherBoard.prototype.opeCPU = function(cpu){
+			this.videoCard.showData(cpu.getVideoData());
+			this.soundCard.soundData(cpu.getSoundData());
+		};
+		
+		var mediator = new MotherBoard(),
+			cd = new CDDrier(mediator),
+			cpu = new CPU(mediator),
+			vc = new VideoCard(mediator),
+			sc = new SoundCard(mediator);
+		mediator.setCDDriver(cd);
+		mediator.setCpu(cpu);
+		mediator.setVideoCard(vc);
+		mediator.setSoundCard(sc);
+		cd.readCD();
+	})();
+	
+	
+	//section5:(更加广义的中介者)
+	在实际开发中会经常简化中介者模式，比如有如下简化：
+	通常会去掉同事对象的父类，其实只要需要相互交互，就可以看做是同事对象，不一定要继承同一个父类;
+	不去刻意定义mediator接口，把具体的中介者对象实现成为单例;
+	同事对象中不再持有中介者，而是在需要的时候直接获取中介者对象并调用，同样中介者也不再持有同事
+	对象，而是在具体方法中去创建，或获取，或从参数中传入;
+	部门与人员的交互：
+	(function(){
+		//部门类
+		var Dep = function(){
+			this.depId = '';
+			this.depName = '';
+		};
+		Dep.prototype = {
+			getDepId: function(){
+				return this.depId;
+			},
+			setDepId: function(depId){
+				this.depId = depId;
+			},
+			getDepName：function(){
+				return this.depName;
+			},
+			setDepName: function(depName){
+				this.depName = depName;
+			},
+			deleteDep: function(){
+				var mediator = DepUserMediatorImpl.getInstance();
+				mediator.deleteDep(this.depId);
+				return true;
+			}
+		};
+		
+		//人员类
+		var User = function(){
+			this.userId = '';
+			this.userName = '';
+		};
+		User.prototype = {
+			getUserId: function(){
+				return this.userId;
+			},
+			setUserId: function(userId){
+				this.userId = userId;
+			},
+			getUserName: function(){
+				return this.userName;
+			},
+			setUserName: function(userName){
+				this.userName = userName;
+			},
+			dimission: function(){
+				var mediator = DepUserMediatorImpl.getInstance();
+				mediator.deleteUser(this.userId);
+				return true;
+			}
+		};
+		
+		//描述部门和人员关系
+		var DepUserModel = function(){
+			this.depUserId = '';
+			this.depId = '';
+			this.userId = '';
+		};
+		DepUserModel.prototype = {
+			setDepUserId: function(depUserId){
+				this.depUserId = depUserId;
+			},
+			getDepUserId: function(){
+				return this.depUserId;
+			},
+			getDepId: function(){
+				return this.depId;
+			},
+			setDepId: function(depId){
+				this.depId = depId;
+			},
+			getUserId: function(){
+				return this.userId;
+			},
+			setUserId: function(userId){
+				this.userId = userId;
+			}
+		};
+		
+		//中介者对象
+		var DepUserMediatorImpl = function(){
+			this.depUserCol = [];
+			this.initTestData();
+		};
+		DepUserMediatorImpl.getInstance = function(){
+			if(!DepUserMediatorImpl.instance instanceof DepUserMediatorImpl){
+				DepUserMediatorImpl.instance = new DepUserMediatorImpl();
+			}
+			return DepUserMediatorImpl.instance;
+		};
+		DepUserMediatorImpl.prototype = {
+			initTestData: function(){
+				var du1 = new DepUserModel();
+				du1.setDepUserId('du1');
+				du1.setDepId('d1');
+				du1.setUserId('u1');
+				this.depUserCol.push(du1);
+				
+				var du2 = new DepUserModel();
+				du1.setDepUserId('du2');
+				du1.setDepId('d2');
+				du1.setUserId('u2');
+				this.depUserCol.push(du2);
+				
+				var du3 = new DepUserModel();
+				du1.setDepUserId('du3');
+				du1.setDepId('d3');
+				du1.setUserId('u3');
+				this.depUserCol.push(du3);
+			},
+			deleteDep: function(depId){
+				for(var i=1,len=this.depUserCol.length; i<len; i++){
+					var item = this.depUserCol[i];
+					if(item.depId ==- depId){
+						this.depUserCol.splice(i,1);
+					}
+				}
+			},
+			deleteUser: function(userId){
+				for(var i=0,len=this.depUserCol.length; i<len; i++){
+					var item = this.depUserCol[i];
+					if(item.userId == userId){
+						this.depUserCol.slice(i,1);
+					}
+				}
+			},
+			showDepUsers: function(dep){
+				for(var i=0,len=this.depUserCol.length; i<len; i++){
+					var item = this.depUserCol[i];
+					if(item.depId == dep.depId){
+						console.log('部门' + dep.depId + '拥有人员其编号为' + dep.userId);
+					}
+				}
+			},
+			showUserDeps: function(user){
+				for(var i=0,len=this.depUserCol.length; i<len; i++){
+					var item = this.depUserCol[i];
+					if(item.userId == user.userId){
+						console.log('人员' + user.depId + '所在部门编号为' + item.depId);
+					}
+				}
+			}
+		};
+		
+	})();
+	
+	//section6:
+	中介者模式优点：
+	松散耦合：中介者模式把多个同事之间的交互关系封装在中介者对象中，从而使得同事
+			  间松散耦合，基本上互不依赖
+	交互集中控制： 正式因为中介者对象封装了所有同事对象的交互，使得这些交互行为发生
+				变化的时候只需要修改中介者对象就可以了，而不必修改同事对象
+	多对多变成一对多： 在没有采用中介者模式的时候，同事对象之间的关系是多对多而难以
+				管理和理解。采用中介者模式变成了一对多的关系，便于管理
+				
+	中介者模式缺点： 
+	过度集中：如果同事对象的交互非常多且比较复杂，当这些复杂性全部集中到中介者的时候
+			  会导致中介者对象十分复杂
+	
+	
+	何时选用中介者模式：
+	如果一组对象之间的通信比较复杂互相依赖且结构混乱，可以采用中介者模式把这些交互关系
+	管理起来，使得各个对象只和中介者交互，从而让关系结构简洁明了
+	
+	中介者模式和外观模式：
+	外观模式用来封装一个子系统内部的多个模块从而对外提供简单易用的接口，也就是说外观模式
+	解决的是子系统内部和子系统外部的交互；而中介者模式提供的是多个平等的同事对象之间的关系
+	的封装。
+	
+	
+	Other example:
+	(function(){
+		function Player(name){
+			this.name = name;
+			this.point = 0;
+		}
+		Player.prototype.play = function(){
+			this.point += 1;
+			mediator.played();
+		};
+		
+		var scoreBoard = {
+			element: document.getElementById('results'),
+			update: function(score){
+				//将最新分数呈现出来
+			}
+		};
+		
+		var mediator = {
+			players: {},
+			setup: function(){
+				var player = this.players;
+				players.home = new Player('home');
+				players.guest = new Player('guest');
+			},
+			played: function(){
+				var players = this.players,
+					score = {
+						home: player.home.points,
+						guest: player.guest.points
+					};
+				scoreBoard.update(score);
+			},
+			keypress: function(e){
+				e = e || window.event;
+				if(e.which == 49){
+					mediator.players.home.play();
+					return;
+				}
+				if(e.which == 48){
+					mediator.players.guest.play();
+					return;
+				}
+			}
+		};
+		
+		//go
+		mediator.setup();
+		window.onkeypress = mediator.keypress;
+		
+		//game over in 30 seconds
+		setTimeout(function(){
+			window.onkeypress = null;
+			console.log('game over');
+		},30000);
+	})();

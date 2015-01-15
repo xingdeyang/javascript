@@ -1,0 +1,71 @@
+外观模式：facade
+外观模式属于接口型模式，它提供了一个方便一致性的高层接口而应用程序不用关心实现细节，
+在javascript这是一个使用非常频繁的模式，特别是在浏览器提供API存在许多差异的情况下，
+我们用外观模式封装统一的应用程序接口而隐藏兼容的细节处理，比如添加事件监听标准浏览器
+采用addEventListener而IE使用的是attachEvent，我们就需要自己封装一个addEvent方法，如下：
+function addEvent(el,type,fn){
+	if(el.addEventListener){
+		el.addEventListener(type,fn,false);
+	}
+	else if(el.attachEvent){
+		el.attachEvent('on'+type,fn);
+	}
+	else{
+		el['on' + type] = fn;
+	}
+}
+其实际就是将两个不同的监听函数放到自定义的方法中，之后对DOM对象监听事件时方便使用而
+不用care兼容性问题。
+
+门面模式的目的不是给子系统添加新的功能，而是为了让外部减少和子系统内多个模块的交互，
+松散耦合，从而让外部能够更简单地使用子系统。因为门面模式是当作子系统的对外接口而出现
+的，虽然也可以在这里定义子系统没有的功能，但不建议这样使用，门面模式应该是包装已有的
+功能，它主要负责组合已有功能来实现客户需要而不是添加新的实现。
+
+适用场景：
+对于那些反复同时出现的代码，我们就应该考虑是否可以将其封装在一起，如函数a和b多次同时
+出现在代码中，应该考虑将a,b组合起来放到一个新方法中。
+
+//section1
+var DED = window.DED  || {};
+DED.util = {
+	getEvent: function(e){
+		return e || window.event;
+	},
+	getTarget: function(e){
+		e = this.getEvent(e);
+		return e.target || e.srcElement;
+	},
+	stopPropagation: function(e){
+		e = this.getEvent(e);
+		if(e.stopPropagation){
+			e.stopPropagation();
+		}
+		else{
+			e.cancelBubble = true;
+		}
+	},
+	preventDefault: function(e){
+		e = this.getEvent(e);
+		if(e.preventDefault){
+			e.preventDefault();
+		}
+		else{
+			e.returnValue = false;
+		}
+	},
+	stopEvent: function(e){
+		this.stopPropagation(e);
+		this.preventDefault(e);
+	}
+};
+在jquery中也大量使用该模式，比如常见的Ajax异步请求调用，jquery提供了一个基本的基础性
+$.ajax方法，但同时也提供了更加高级的外观，比如$.get,$.getJSON,$.getScript等
+
+个人体会：
+门面模式和中介者模式的区别是中介者模式主要用来解耦以封装多个对象之间的交互，多用在系统
+内部的多个模块之间，而门面模式封装的只是单向的交互，是从客户端应用程序访问系统，没有从
+系统中来访问客户端的调用。中介者模式的实现中是需要具体的交互功能的，而门面模式的实现中
+一般是组合调用或者转调用内部实现的功能，通常门面模式本身并不实现这些功能。中介者模式的
+主要目的是松散多个模块的耦合，把这些耦合关系全部放到中介者中去实现，而门面模式就是简化
+客户端的调用，从业务场景来讲两者可以说完全不搭边。

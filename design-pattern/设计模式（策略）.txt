@@ -1,0 +1,38 @@
+策略模式
+策略模式定义了算法家族，分别封装起来，让他们之间可以互相替换，此模式让算法的变化不会影响到使用
+算法的客户。
+在理解策略模式之前，我们先来看一个例子，一般情况下，如果我们要做数据合法性验证，很多时候都是按照
+switch语句来判断，但是这就带来了几个问题，首先如果增加需求的话，我们还要再次修改这段代码以增加逻辑，
+而且在进行单元测试的时候也会越来越复杂，代码如下：
+validator = {
+	validate: function(value,type){
+		switch(type){
+			case 'isNonEmpty': return true; break;
+			case 'isNumber': return true; break;
+			case 'isAlphaNum': return true; break;
+			default: return true; break;
+		}
+	}
+};
+//测试
+alert(validator.validate('123','isNomEmpty'));
+
+那如何来避免上述代码中的问题呢，根据策略模式，我们可以将相同的工作代码单独封装成不同的类，然后通过
+统一的策略处理类来处理，我们先定义策略处理类，代码如下：
+var validator = {
+	//所有可以的验证规则处理类存放的地方，后面会单独定义
+	types: {},
+	//验证类所对应的错误信息
+	messages: [],
+	//需要使用的验证类型
+	config: {},
+	//暴露的公开验证方法
+	validate: function(data){
+		var i,msg,type,checker,result_ok;
+		this.messages = [];
+		for(i in data){
+			type = this.config[i];
+			checker = this.types[type];
+		}
+	}
+};

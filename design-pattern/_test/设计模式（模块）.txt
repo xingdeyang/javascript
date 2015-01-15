@@ -1,288 +1,71 @@
-模板模式
-定义了一个操作中的算法的骨架，而将一些步骤延迟到子类中。模板方法使得子类可以不改变一个算法的结构即
-可以重新定义该算法的某些特定步骤。其本质是固定算法骨架。
-模板模式的功能在于固定算法骨架，而让具体算法实现可扩展。模板方法模式还额外提供了一个好处，就是可以
-控制子类的扩展。因为在父类中定义好了算法的步骤，只是在某几个固定的点才会调用到被子类实现的方法，因此
-也就只允许在这几个点来扩展功能，这些可以被子类覆盖以扩展功能的方法通常被称之为“钩子方法”。要特别注意
-模板模式中的变与不变，不变的是固定方法和算法骨架，而需要变化的地方是通过抽象方法，把具体实现延迟到子
-类中了，而且还通过父类的定义来约束子类的行为，从而使系统能有更好的复用性和扩展性。作为父类的模板会在
-需要的时候调用子类相应的方法，也就由父类来找子类，而不是让子类来找父类（好莱坞法则）。
+Module:模块模式
+模块模式被定义为一种为对象提供公有和私有封装的方法，Nodejs在语言层面已经（通过module,exports,require）
+提供了这种模块机制。基于浏览器宿主环境的javascript则需要通过自我实现，最新版的ECMAScript(Harmony)已经
+考虑了该需求,当然如果服务端采用nodejs可以考虑使用browserify组件来实现浏览器端js代码的模块化。
+
+使用场景：
+目前我主要用于业务代码的组织架构
+
+代码示例：
+
+//section1:通过闭包模拟私有以实现模块化
+var testModule = (function(){
+    var counter = 0;
+        /*
+            ...
+            counter为私有变量
+        */
+    return {
+        incrementCounter: function(){
+            counter++;
+        },
+        resetCounter: function(){
+            counter = 0;
+        }
+    };
+})();
 
 
-//section1
-	(function(){
-		//模板抽象类
-		function AbstractClass(){}
-		AbstractClass.prototype = {
-			doPrimitiveOperation1: function(){
-				//...
-			},
-			domPrimitiveOperation2: function(){
-				//...
-			},
-			templateMethod: function(){
-				this.doPrimitiveOperation1();
-				this.domPrimitiveOperation2();
-			}
-		};
-		
-		//具体模板类
-		function ConcreteClass(){}
-		ConcreteClass.prototype = {
-			__proto__: AbstractClass.prototype,
-			doPrimitiveOperation1: function(){
-				//具体操作1
-			},
-			domPrimitiveOperation2: function(){
-				//具体操作2
-			}
-		};
-	})();
+//section2: 模块模式的变体（导入混合）
+var myModule = (function($,_){
+    var privateVariable;
+    function privateMethod(){
+        ...
+        //使用导入模块jquery,underscore
+    }
+    return {
+        publicMethod: function(){
+            privateMethod();
+        }
+    };
+})(jQuery,_);
 
-//section2:验证人员登录
-	function LoginModel(){
-		this.loginId;
-		this.pwd;
-	}
-	
-	//抽象模板类
-	function LoginTemplate(){}
-	LoginTemplate.prototype = {
-		login: function(loginModel){
-			var dlLm = this.findLoginUser(loginModel.loginId);
-			if(dlLm){
-				//对密码进行加密
-				var encryptPwd = this.encryptPwd(loginModel.pwd);
-				//把加密后的密码设置到登录数据模型中
-				loginModel.pwd = encryptPwd;
-				//判断是否匹配
-				return this.match(loginModel,dbLm);
-			}
-		},
-		findLoginUser: function(loginId){},
-		encryptPwd: function(pwd){
-			return pwd;
-		},
-		match: function(lm,dbLm){
-			return lm.loginId == dbLm.loginId && lm.pwd == dbLm.pwd;
-		}
-	};
-	
-	//具体模板类（普通用户登录控制的逻辑）
-	function NormalLogin(){}
-	NormalLogin.prototype = {
-		__proto__ : LoginTemplate.prototype,
-		findLoginUser: function(loginId){
-			var lm = new LoginModel();
-			lm.loginId = loginId;
-			lm.pwd = 'testpwd';
-			return lm;
-		}
-	};
-	
-	//具体模板类（工作人员登录控制逻辑）
-	function WorkerLogin(){}
-	WorkerLogin.prototype = {
-		__proto__: LoginTemplate,
-		findLoginUser: function(loginId){
-			var lm = new LoginModel();
-			lm.loginId = loginId;
-			lm.pwd = 'workerpwd';
-			return lm;
-		},
-		encryptPwd: function(pwd){
-			console.log('使用md5加密');
-			return pwd;
-		}
-	};
-	
-	var lm = new LoginModel();
-	lm.loginId = 'admin';
-	lm.pwd = 'workerpwd';
-	
-	var lt = new WorkerLogin();
-	var lt2 = new NormalLogin();
-	
-	var flag = lt.login(lm);
-	console.log('可以登录工作平台' + flag);
-	var flag2 = lt2.login(lm);
-	console.log('不可以进行普通人员登录' + flag2);
-	
-//section3
-	function test(){
-		var crypto = require('crypto');
-		function createHmac(){
-			return crypto.createHmac('sha1','password');
-		}
-		
-		//封装进行登录控制所需要的数据
-		function LoginModel(){
-			this.loginId;
-			this.pwd;
-		}
-		
-		//登录控制的模板
-		function LoginTemplate(){}
-		LoginTemplate.prototype = {
-			login: function(loginModel){
-				var dbLm = this.findLoginUser(loginModel.loginId);
-				if(dbLm){
-					var encryptPwd = this.encryptPwd(loginModel.pwd);
-					loginModel.pwd = encryptPwd;
-					return this.match(loginModel,dbLm);
-				}
-				return false;
-			},
-			findLoginUser: function(loginId){},
-			encryptPwd: function(pwd){
-				return pwd;
-			},
-			match: function(lm,dbLm){
-				return lm.loginId == dbLm.loginId && lm.pwd == dbLm.pwd;
-			}
-		};
-		
-		
-		function createLoginClass(prop){
-			Template.prototype = loginTemplate.prototype;
-			return Template;
-			function Template(){
-				for(var i in prop){
-					if(!prop.hasOwnProperty(i)) continue;
-					this[i] = prop[i];
-				}
-			}
-		}
-		
-		var NormalLogin = createLoginClass({
-			findLoginUser: function(loginId){
-				var lm = new LoginModel();
-				lm.loginId = loginId;
-				lm.pwd = 'testpwd';
-				return lm;
-			}
-		});
-		
-		var WorkerLogin = createLoginClass({
-			findLoginUser: function(loginId){
-				var lm = new LoginModel();
-				lm.loginId = loginId;
-				lm.pwd = createHmac().update('workerpwd').digest('hex');
-				return lm;
-			},
-			encryptPwd: function(pwd){
-				return createHmac().update(pwd).digest('hex');
-			}
-		});
-		
-		var lm = new LoginModel();
-		lm.loginId = 'admin';
-		lm.pwd = 'workerpwd';
-		var lt = new WorkerLogin();
-		var lt2 = new NormalLogin();
-		var flag = lt.login(lm);
-		console.log('可以登录工作平台' + flag);
-		var flag2 = new lt2.login(lm);
-		console.log('不可以登录普通用户' + flag);
-	}
-	
 
-//section4(扩展登录控制)
-	function NormalLoginModel(){
-		LoginModel.call(this);
-		this.question;
-		this.answer;
-	}
-	
-	function NormalLogin2(){}
-	NormalLogin2.prototype = {
-		__proto__: LoginTempalte,
-		findLoginUser: function(loginId){
-			var nlm = new NormalLoginModel();
-			nlm.loginId = loginId;
-			nlm.pwd = 'testpwd';
-			nlm.question = 'testQuestion';
-			nlm.answer = 'testAnswer';
-			return nlm;
-		},
-		match: function(lm,dblm){
-			var f1= LoginTemplate.prototype.match.apply(this,arguments);
-			if(f1){
-				return dblm.question == lm.question && dblm.answer == lm.answer;
-			}
-			return false;
-		}
-	};
-	
-	var nlm = new NormalLoginModel();
-	nlm.loginId = 'testUser';
-	nlm.pwd = 'testpwd';
-	nlm.question = 'testQuestion';
-	nlm.answer = 'testAnswer';
-	var lt3 = new NormalLogin2();
-	var flag3 = lt3.login(nlm);
-	console.log('可以进行普通人员加强版登录' + flag3);
-	
-	
-//教你如何冲咖啡
-	(function(){
-		var CoffeeBeverage = function(){};
-		CoffeeBeverage.prototype = {
-			/*
-				模板方法，这个例子中算法是用来制作咖啡的
-			*/
-			prepareRecipe: function(){
-				this.boilWater();
-				this.brew();
-				this.pourInCup();
-				this.addConditions();
-			},
-			brew: function(){
-				throw new Error('abstract addConditions method should be written');
-			},
-			boilWater: function(){
-				console.log('boil water');
-			},
-			pourInCup: function(){
-				console.log('pouring into cup');
-			}
-		};
-		
-		var Tea = function(){};
-		Tea.prototype = {
-			__proto__: CoffeeBeverage.prototype,
-			brew: function(){
-				console.log('Dripping coffee through filter');
-			},
-			addConditions: function(){
-				console.log('addding sugar and milk');
-			}
-		};
-		
-		var myTea = new Tea();
-		myTea.prepareRecipe();
-	})();
-	
-	//由coffeeBeverage类主导一切，它拥有算法，而且保护这个算法。对子类来说，coffeeBeverage类deep存在，可以将代码的复用
-	最大化，算法只存在于一个地方，所以容易修改。这个模板方法提供了一个框架，可以让其他的咖啡饮料插进去，新的咖啡饮料
-	只要实现自己的方法就可以了。CoffeeBeverage类专注在算法本身，而由子类提供完整的实现。
-	
-	好莱坞原则：别调用我们，我们会调用你
-	在好莱坞原则下，我们允许低层组件将自己挂钩到系统上，但是高层组件会决定什么时候和怎样使用这些组件。换句话说，高层组件
-	对待低层组件的方式是“别调用我们，我们会调用你”
-	
-	
-//section5
-	模板模式优点：
-	模板模式是一种实现代码复用的很好的手段，通过把子类的公共功能提炼和抽取,把公共部分放到模板中去实现。
-	模板模式缺点：
-	算法骨架不容易升级
-	模板模式最基本的功能是通过模板的制定，把算法骨架完全固定下来，事实上模板和子类是非常耦合的。如果要对模板中的算法骨架进行
-	变更，可能就会要求所有相关的子类进行相应的变化。所以抽取算法骨架时要特别小心，尽量确保不会变化的部分才放到模板中。
-	使用场景：
-	需要固定定义算法骨架，实现了一个算法的不变的部分，并把可变的行为留给子类来实现的情况；
-	各个子类中具有公共行为，应该抽取出来，集中在一个公共类去实现，从而避免代码重复；
-	需要控制子类扩展情况，模板方法模式会在特定的点来调用子类的方法，这样只允许在这些点进行扩展；
-	
-	
+//section3: 关于模块命名
+在不考虑使用模块化工具库的情况下，一般采用命名空间的方式来定义各模块名称
 
+
+//section5: 更好的写法
+/*
+    第一部分写法不太爽的地方是在一个公有方法中调用另个一公有方法时要重复模块名称或者this，
+    可以简单在私有作用域中定义所有函数与变量，返回匿名对象中以指针方式指向想要暴露的成员,可读性更强
+*/
+var myModule = (function(){
+    function method1(){
+        //...
+    }
+    function method2(){
+        //...
+    }
+    return {
+        set: method1,
+        get: method2
+    };
+})();
+
+
+//section4:关于seajs实现模块化加载的源码设计思路待续
+1.模块缓存（id标示，状态设计）
+2.模块加载后自执行生成module对象，通过require或者user方法调用模块时执行factory,要特别注意module.exports如何返回
+3.模块层级依赖的解决方案
+4.路由设计```

@@ -1,4 +1,6 @@
 策略模式
+
+//section1:
 策略模式定义了算法家族，分别封装起来，让他们之间可以互相替换，此模式让算法的变化不会影响到使用
 算法的客户。
 在理解策略模式之前，我们先来看一个例子，一般情况下，如果我们要做数据合法性验证，很多时候都是按照
@@ -33,6 +35,132 @@ var validator = {
 		for(i in data){
 			type = this.config[i];
 			checker = this.types[type];
+			if(!type){
+				continue;
+			}
+			if(!checker){
+				throw{
+					name: 'validationError',
+					message: 'no handler to validate type' + type
+				}
+			}
+			result_ok = checker.validate(data[i]);
+			if(!result_ok){
+				msg = 'invalid value for * ' + i + '*, ' + checker.instructions;
+				this.messages.push(msg);
+			}
 		}
+		return this.hasErrors();
+	},
+	//helper
+	hasErrors: function(){
+		return this.messages.length !== 0;
 	}
 };
+
+然后剩下的工作，就是定义types里存放的各种验证类了，我们这里只举几个例子：
+validator.types.isNonEmpty = {
+	validate: function(value){
+		return value !== '';
+	},
+	instructions: '传入的值不能为空'
+};
+validator.types.isNumber = {
+	validate: function(value){
+		return !isNaN(value);
+	},
+	instructions: '传入的值只能是合法的数字'
+};
+validator.types.isAlphaNum = {
+	validate: function(value){
+		return !/[^a-z0-9]/i.test(value);
+	},
+	instructions: '传入的值只能是字母和数字'
+};
+
+使用的时候，我们首先要定义需要验证的数据集合，然后还需要定义每种数据需要验证
+的规则类型，代码如下：
+var data = {
+	first_name: 'Tom',
+	last_name: 'Xu',
+	age: 'unknown',
+	username: 'TomXu'
+};
+validator.config = {
+	first_name: 'isNomEmpty',
+	age: 'isNumber',
+	username: 'isAlphaNum'
+};
+
+最后，获取验证结果的代码就简单了：
+validator.validate(data);
+if(validator.hasErrors()){
+	console.log(validator.messages.join('\n'));
+}
+
+//section2:
+策略模式究其本质是使用委托去解耦使用它们的算法类，这样做有几个好处，他可以防止使用
+大量条件语句来决定哪些算法用于特定类型的对象。将关注点分离开来，因此降低了客户端的复杂
+程度，同时还可以促进子类化的组成。它提高了模块化和可测性。每一个算法都单独可测试，每
+一个客户端都可以模拟算法。任意的客户端都能使用任何算法。他们可以互调，就像乐高积木一样。
+为了是先策略模式，通常有两个参与者：
+该策略的对象，封装了算法。
+客户端（上下文）对象，以即插即用的方式能使用任何策略。这里介绍了我在javascript中怎样使用
+策略模式，在混乱无序的环境中怎样使用它将库拆成小插件，以及即插即用包的。
+
+函数作为策略：
+一个函数提供了一种封装算法的绝佳方式，同时可以作为一种策略来使用，只需通过一个到客户端的
+函数并确保你的客户端能调用该策略。
+我们用一个例子来证明，假设我们想创建一个Greeter类，它所要做的就是和人打招呼。我们希望Greeter
+类能知道跟人打招呼的不同方式。为了实现这一想法，我们为打招呼创建不同的策略。
+var Greeter = function(strategy){
+	this.strategy = strategy;
+};
+Greeter.prototype.greet = function(){
+	return this.strategy();
+};
+var politeGreetingStrategy = function(){
+	console.log('hello');
+};
+var friendlyGreetingStrategy = function(){
+	console.log('hey');
+};
+var boredGreetingStrategy = function(){
+	console.log('sup.');
+};
+
+var politeGreeter = new Greeter(politeGreetingStrategy);
+var friendlyGreeter = new Greeter(friendlyGreetingStrategy);
+var boredGreeter = new Greeter(friendlyGreetingStrategy);
+在上面的例子中，Greeter是客户端并且有三种策略。正如你所看到的，Greeter知道怎样使用算法，
+但对于算法的细节却一无所知。对于复杂的算法，一个简单的函数往往不能满足。在这种情况下，
+最好的方式就是按照对象来定义。
+
+类作为策略：
+策略同样可以是类，特别是当算法比上述例子中使用的认为的（策略/算法）更复杂的时候。使用类
+的话，允许你为每一种策略定义一个接口。在下面的例子中，证实了这一点：
+var Strategy = function(){};
+Strategy.prototype.execute = function(){
+	throw new Error('...');
+};
+var GreetingStrategy = function(){};
+GreetingStrategy.prototype = Object.create(Strategy.prototype);
+GreetingStrategy.prototype.execute = function(){
+	return this.sayHi() + this.sayBye();
+};
+GreetingStrategy.prototype.sayHi = function(){
+	return 'hello,';
+};
+GreetingStrategy.prototype.sayBye = function(){
+	return 'goodbye,';
+};
+Greeter.prototype.greet = function(){
+	return this.strategy.execute();
+};
+var greeter = new Greeter(new GreetingStrategy());
+greeter.greet();
+通过使用类，我们与一个executemethod对象定义了一个策略。客户端可以使用任何策略实现该接口。
+同样注意我又是怎样创建GreetingStrategy的，有趣的部分是对methodexecute的重载。它以其他函数
+的形式定义。现在类的后继子类可以改变特定的行为....
+说的乱七八糟，完全没整明白
+

@@ -1,0 +1,336 @@
+状态模式：
+允许一个对象在内部状态发生改变时改变它的行为，对象看起来似乎修改了它的类。其本质是根据状态来
+分离和选择行为。所谓对象的状态通常指的是对象实例的属性值，而行为指的就是对象的功能，再具体些
+就是行为大多数可以对应到方法上。状态模式的功能就是分离状态和行为，通过维护状态的变化来调用不
+同状态的不同功能。也就是说状态和行为是关联的，它们的关系可以描述为：状态决定行为。
+行为的平行性：平行性是指各个状态的行为所处的层次是一样的，相互是独立的没有关联的，是根据状态
+来决定到底走平行线哪一条。行为是不同的，当然对应的实现也是不同的，相互之间是不可替换的。平等
+性强调的是可替换性，大家是同一行为的不同描述或者实现，因此在同一个行为发生的时候，可以根据条
+件挑选任意的一个实现来进行相应处理。状态模式和策略模式的结构完全一样，状态模式的行为是平行的
+不可替换的；而策略模式的行为是平等的，可互相替换的。
+
+在状态模式中，上下文是持有状态的对象，但是上下文自身并不处理跟状态相关的行为，而是把处理状态
+的功能委托给了状态对应的状态处理类来处理。在具体的状态处理类中经常需要获取上下文自身的数据，
+甚至在必要的时候要回调上下文的方法，因此通常将上下文自身当做一个参数传递给具体的状态处理类。
+客户端一般只和上下文交互，客户端可以用状态对象来配置一个上下文，一旦配置完毕，就不需要再和状
+态对象打交道了。
+
+由于状态的维护和转换在状态模式的结构里面，不管你是扩展了状态实现类还是新添了状态实现类，都需要
+修改状态维护和转换的地方。
+
+创建和销毁状态对象：
+当需要使用状态对象的时候创建，使用完后销毁他们；
+提前创建它们并始终不销毁；
+采用延迟加载和缓存合用的方式，就是当第一次需要使用状态对象的时候创建，使用完后并不销毁，而是把
+这个对象缓存起来，等待下一次使用。
+如果状态在运行时是不可知的，而且上下文比较稳定，建议选择1；如果状态改变很频繁，而且状态对象还
+存储着大量的数据信息，建议选择2；如果无法确定状态改变是否频繁，而且有些状态对象的状态数据量大，
+有些较小，建议选择3
+
+状态模式的调用顺序：
+调用上下文的方法来处理业务请求；
+判断并维护状态；
+根据状态来调用相应的状态处理对象的方法；
+
+采用让状态对象来维护和转换状态的调用顺序：
+调用上下文的方法来处理业务请求;
+获取State对象;
+委托让相应的状态对象去处理;
+调用构造方法得到下一个状态对象的实例;
+设置下一个状态处理对象;
+
+状态的维护和转换控制
+所谓的状态维护，指的是维护状态的数据，而状态的转换指的是根据状态的变化来选择不同的状态处理对象，
+在状态模式中，通常有两个地方可以进行状态的维护和转换控制。一个就是上下文中，因为状态本身通常被
+实现为上下文对象的状态，因为可以在上下文中进行状态维护，当然也就可以控制状态的转换了。另外一个
+地方就是在状态的处理类中。当每个状态处理对象处理完自身状态所对应的功能后，可以根据需要指定后继
+状态，以便让应用能正确处理后继的请求。
+
+如何选择这两种方式：
+如果状态转换的规则是一定的，一般不需要什么扩展规则，那么就适合在上下文中统一进行状态的维护；
+如果状态的转换取决于前一个状态动态处理的结果，或者是依赖于外部数据，为了增强灵活性，这种情况下，
+一般在状态处理类中进行状态的维护
+
+(function(){
+	function ConcreteStateA(){}
+	ConcreteStateA.prototype.handle = function(){};
+	function ConcreteStateB(){}
+	ConcreteStateB.prototype.handle = function(){};
+	
+	//定义客户感兴趣的接口，通常会维护一个State对象的实例
+	function Context(state){
+		this.state = state;
+	}
+	Context.prototype = {
+		request: function(param){
+			this.state.handle(param);
+		}
+	};
+})();
+
+(function(){
+	function NormalVoteState(){}
+	NormalState.prototype.vote = function(user,voteItem,voteManager){
+		voteManager.mapVote[user] = voteItem;
+	}
+	
+	function RepeatVoteState(){}
+	RepeatVoteState.prototype.vote = function(user,voteItem,voteManager){
+		console.log('请不要重复投票');
+	}
+	
+	function SpliteVoteState(){}
+	SpliteVoteState.prototype.vote = function(user,voteItem,voteManager){
+		var s = voteManager.mapVote[user];
+		if(s){
+			delete voteManager.mapVote[user];
+		}
+		console.log('你有恶意刷票行为，取消投票资格');
+	}
+	
+	function BlackVoteState(){}
+	BlackVoteState.prototype.vote = function(user,voteItem,voteManager){
+		console.log('进入黑名单，将禁止登陆和使用本系统');
+	}
+	
+	function VoteManager(){
+		this.state = null;
+		this.mapVote = {};
+		this.mapVoteCount = {};
+	}
+	VoteManager.prototype = {
+		vote: function(user,voteItem){
+			var oldVoteCount = this.mapVote[user] || 0;
+			this.mapVoteCount = ++oldVoteCount;
+			if(oldVoteCount == 1){
+				this.state = new NormalVoteState();
+			}
+			else if(oldVoteCount > 1 && oldVoteCount < 5){
+				this.state = new RepeatVoteState();
+			}
+			else if(oldVoteCount >=5 && oldVoteCount < 8){
+				this.state = new SpliteVoteState();
+			}
+			else if(oldVoteCount >= 8){
+				this.state = new BlackVoteState();
+			}
+			this.state.vote(user,voteItem,this);
+		}
+	};
+	
+	var vm = new VoteManager();
+	for(var i=0; i<8; i++){
+		vm.vote('ul','A');
+	}
+	
+	
+	//another
+	var States = {
+		normal: function(user,voteItem,voteManager){
+			voteManager.mapVote[user] = voteItem;
+		},
+		repeat: function(user,voteItem,voteManager){
+			console.log('请不要重复投票');
+		},
+		splite: function(user,voteItem,voteManager){
+			var s = voteManager.mapVote(user);
+			if(s !== null){
+				delete voteManager.mapVote[user];
+			}
+			console.log('您有恶意刷票行为，取消投票资格');
+		},
+		black: function(user,voteItem,voteManager){
+			console.log('进入黑名单，将禁止登陆和使用本系统');
+		}
+	};
+	
+	function VoteManager2(){
+		this.state = null;
+		this.mapVote = {};
+		this.mapVoteCount = {};
+	}
+	VoteManager2.prototype = {
+		vote: function(user,voteItem){
+			var oldVoteCount = this.mapVoteCount[user] || 0;
+			this.mapVoteCount[user] = ++oldVoteCount;
+			var state;
+			if(oldVoteCount == 1){
+				state == 'normal';
+			}
+			else if(oldVoteCount > 1 && oldVoteCount < 5){
+				state == 'repeat';
+			}
+			else if(oldVoteCount >= 5 && oldVoteCount < 8){
+				state == 'splite';
+			}
+			else if(oldVoteCount >= 8){
+				state == 'black';
+			}
+			this.state = States[state];
+			this.state(user,voteItem,this);
+		}
+	};
+	
+	var vm = new VoteManager2();
+	for(var i=0; i<8; i++){
+		vm.vote('ul','A');
+	}	
+})();
+
+
+(function(){
+	//在状态处理类中进行后继状态的维护和转换
+	function NormalVoteState(){
+		this.vote = function(user,voteItem,voteManager){
+			voteManager.mapVote[user] = voteItem;
+			console.log('恭喜您投票成功');
+			//正常投票完毕，维护下一个状态，同一个人再投票就重复了
+			voteManager.mapState[user] = new RepeatVoteState();
+		};
+	}
+	
+	function RepeatVoteState(){
+		this.vote = function(user,voteItem,voteManager){
+			console.log('请不要重复投票');
+			if(voteManager.mapVote[user] >= 4){
+				voteManager.mapState[user] = new SpliteVoteManager();
+			}
+		}
+	}
+	
+	function SpliteVoteState(){
+		this.vote = function(user,voteItem,voteManager){
+			var s = voteManager.mapVote[user];
+			if(s !== null){
+				delete voteManager.mapVote[user];
+			}
+			console.log('你有恶心刷票行为，取消投票资格');
+			if(voteManager.mapVote[user] >= 7){
+				voteManager.mapState[user] = new BlackVoteState();
+			}
+		}
+	}
+	
+	function BlackVoteState(){
+		this.vote = function(user,voteItem,voteManager){
+			console.log('进入黑名单，将禁止登陆和使用本系统');
+		};
+	}
+	
+	function VoteManager(){
+		this.mapState = {};
+		this.mapVote = {};
+		this.mapVoteCount = {};
+		
+		this.vote = function(user,voteItem){
+			var oldVoteCount = this.mapVote[user];
+			if(oldVoteCount == null){
+				oldVoteCount = 0;
+			}
+			this.mapVoteCount[user] += oldVoteCount;
+			var state = this.mapState[user];
+			if(state == null){
+				state = new NormalVoteState();
+			}
+			state.vote(user,voteItem,this);
+		};
+	}
+	
+	var vm = new VoteManager();
+	for(var i=0; i<8; i++){
+		vm.vote('ul','A');
+	}
+	
+})();
+
+
+(function(){
+	/*
+		请假流程，需要项目经理和部门经理审批
+	*/
+	//公共状态处理机
+	function LeaveRequestContext(){
+		this.state = null;
+		this.businessVO = null;
+	}
+	LeaveRequestContext.prototype = {
+		doWork: function(){
+			this.state.doWork(this);
+		}
+	};
+	
+	//定义请假单的业务数据模型
+	function LeaveRequestModel(){
+		this.user = '';
+		this.beginDate = '';
+		this.leaveDays = '';
+		this.result = '';
+	}
+	
+	function ProjectManagerState(){
+		this.doWork = function(request){
+			var leaveRequestModel = request.businessVO;
+			console.log('项目经理审核中，请稍后');
+			var answer = window.prompt('1为同意，2为不同意');
+			var result = answer == 1 ? '同意' : '不同意';
+			leaveRequestModel.result == '项目经理审核结果' + result;
+			
+			if(answer == 1){
+				if(leaveRequestModel.leaveDays > 3){
+					request.state = new DepManagerState();
+				}
+				else{
+					request.state = new AuditOverState();
+				}
+			}
+			else{
+				request.state = new AuditOverState();
+			}
+			request.doWork();
+		};
+	}
+	
+	function DepManagerState(){
+		this.doWork = function(request){
+			var leaveRequestModel = request.businessVO;
+			console.log('部门经理审核中，请稍后');
+			var answer = window.prompt('1为同意，2为不同意');
+			var result = answer == 1 ? '同意' : '不同意';
+			leaveRequestModel.result = '部门经理审核结果' + result;
+			request.state = new AuditOverState();
+			request.doWork();
+		};
+	}
+	
+	function AuditOverState(){
+		this.doWork = function(request){
+			var leaveRequestModel = request.businessVO;
+			console.log(leaveRequestModel.user + ',您的请假申请已经审核结束，结果为：' + leaveRequestModel.result);
+		};
+	}
+	
+	var lrm = new LeaveRequestModel();
+	lrm.user = '小林';
+	lrm.beginDate = '2014-4-2';
+	lrm.leaveDays = 5;
+	
+	var request = new LeaveRequestContext();
+	request.businessVO = lrm;
+	request.state = new ProjectManagerState();
+	request.doWork();
+	
+})();
+
+
+合适选用状态模式：
+如果一个对象的行为取决于它的状态，而且它必须在运行时根据状态来改变它的行为，可以使用状态模式把状态和行为分离。
+如果一个操作中含有庞大的分支语句，而且这些分支依赖于该对象的状态，可以使用状态模式，把各个分支的处理分散包装
+到单独的对象处理类中。
+
+状态模式和观察者模式：
+这两个模式都是在状态发生改变的时候触发行为，只不过观察者模式的行为是固定的，那就是被观察者通知所有观察者；而
+状态模式是根据状态来选择不同的处理。从表面上看，两个模式相似，观察者模式中的被观察者对象就好比状态模式的上下文，
+观察者模式中当被观察者对象的状态发生改变的时候，触发的通知所有观察者的方法就好比状态模式中根据状态变化选择对应
+的处理状态。但实际上两个模式又不同，观察者模式的目的是在于被观察者状态发生改变的时候，触发观察者联动，具体如何
+处理观察者模式不管；而状态模式的主要目的在于根据状态来分离和选择行为，当状态发生变化的时候，动态地改变行为。
+

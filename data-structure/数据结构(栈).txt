@@ -8,7 +8,8 @@
 方法虽然可以访问栈顶的元素，但是调用该方法后栈顶元素也就永久被删除了。peek()方法
 则只返回栈顶的元素，而不删除。为了记录栈顶元素的位置，同时也为了标记哪里可以加入
 新元素，我们使用变量top，当向栈内压入元素时，该变量增大，从栈内弹出元素时，该变量
-减小
+减小。
+栈的概念和实现它的内部数据结构是完全分开的
 
 function Stack(){
 	this.dataStore = [];
@@ -23,6 +24,7 @@ function push(element){
 }
 
 function pop(){
+	//最顶层元素其实没有删除，但在概念上已经不存在因为top已变
 	return this.dataStore[--this.top];
 }
 
@@ -38,8 +40,12 @@ function clear(){
 	this.top = 0;
 }
 
+function isEmpty(){
+	return this.top == 0;
+}
+
 /*
-	//回文
+	//回文或者倒序
 	function isPalindrome(word){
 		var s = new Stack(), rword = '';
 		for(var i=0; i<word.length; i++){
@@ -62,4 +68,29 @@ function clear(){
 		}
 		return product;
 	}
+	
+	//分隔符匹配
+	var checkStack = new Stack();
+	for(var i=0; i<strArr.length; i++){
+		var item = strArr[i];
+		if(/[\{\}\[\]\(\)]/g.test(item)){
+			switch(item){
+				case '{': 
+				case '[':
+				case '(':
+					checkStack.push(item); break;
+				case '}':
+				case ']':
+				case ')':
+					if(!checkStack.isEmpty()){
+						var checkItem = checkStack.pop();
+						if((item == '}' && checkItem !== '{') || (item == ']' && checkItem !== '[') || (item == ')' && checkItem !== '(')){
+							console.log('error at match ' + item);
+						}
+					}
+					break;
+			}
+		}
+	}
+	
 */

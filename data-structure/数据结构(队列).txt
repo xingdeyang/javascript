@@ -1,0 +1,121 @@
+queue定义：
+队列是一种列表，不同的是队列只能在队尾插入元素，在队首删除元素。队列用于存储按
+顺序排列的数据，先进先出，这点和栈不一样，在栈中，最后入栈的元素反而优先被处理。
+可以将队列想象成在银行前面排队的人群，排在最前面的人第一个办理业务，新来的人只能
+在后面排队，直到轮到他们为止。队列是一种先进先出的数据结构。队列被用在很多地方，
+比如提交操作系统的一系列进程，打印任务池等，一些仿真系统用队列来模拟银行或杂货店
+排队的顾客。
+
+队列的两种主要操作是：向队列中插入新元素和删除队列中的元素。插入操作也叫做入列，
+删除操作也叫做出列。入列操作是在队尾插入新元素，出列操作是在队首删除元素。队列的
+另外一个重要操作是读取队列头部的元素，这个操作叫做peek,但不把它从队列中删除。另外
+我们还要知道队列中存储了多少元素，可以使用length属性满足该需求，要想清空队列中的
+所有元素，可以使用clear方法来实现。
+
+function Queue(){
+	this.dataStore = [];
+	this.enqueue = enqueue;
+	this.dequeue = dequeue;
+	this.front = front;
+	this.back = back;
+	this.toString = toString;
+	this.empty = empty; 
+}
+
+function enqueue(element){
+	this.dataStore.push(element);
+}
+
+function dequeue(){
+	this.dataStore.shift();
+}
+
+function front(){
+	return this.dataStore[0];
+}
+
+function back(){
+	return this.dataStore[this.dataStore.length - 1];
+}
+
+function empty(){
+	if(this.dataStore.length == 0){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+/*
+	//结对舞伴场景
+	function Dancer(name,sex){
+		this.name = name;
+		this.sex = sex;
+	}
+	
+	function getDancers(maleDancers,femaleDancers){
+		var names = read('dancers.txt').split('\n');
+		for(var i=0; i<names.length; i++){
+			names[i] = names[i].trim();
+		}
+		for(var i=0; i<names.length; i++){
+			var dancer = names[i].split(' ');
+			var sex = dancer[0];
+			var name = dancer[1];
+			if(sex == 'F'){
+				femaleDancers.enqueue(new Dancer(name,sex));
+			}
+			else{
+				maleDancers.enqueue(new Dancer(name,sex));
+			}
+		}
+	}
+	
+	function dance(maleDancers,femaleDancers){
+		print('the dance partner are: \n');
+		while(!maleDancers.empty() && !femaleDancers.empty()){
+			var maleDancer = maleDancers.dequeue();
+			print('male dancer is : ' + maleDancer.name);
+			var femaleDancer = femaleDancers.dequeue();
+			print('female dancer is : ' + femaleDancer.name);
+		}
+	}
+	
+	var maleDancers = new Queue(),
+		femaleDancers = new Queue();
+	getDancers(maleDancers,femaleDancers);
+	dance(maleDancers,femaleDancers);
+	if(!femaleDancers.empty()){
+		print(femaleDancers.front().name + 'is waiting to dance');
+	}
+	if(!maleDancers.empty()){
+		print(maleDancers.front().name + 'is waiting to dance');
+	}
+	
+	//优先队列
+	一般情况下从队列中删除的元素一定是率先入列的元素。但是也有一些队列的应用，
+	在删除元素时不必遵守先进先出的约定。这种应用，需要使用一个叫做优先队列的
+	数据结构来进行模拟。从优先队列中删除元素时，需要考虑优先权的限制，比如医院
+	急诊科的候诊室就是一个采取优先队列的例子。当病人进入候诊室，分诊护士会评估
+	患者病情的严重程度，然后给一个优先级编码，高优先级的患者先于低优先级的患者
+	就医，同样优先级的患者按照队列中的顺序进行
+	
+	function Patient(name,code){
+		this.name = name;
+		//code代表优先级程度
+		this.code = code;
+	}
+	
+	//重新定义dequeue()方法，使其删除队列中具有最高优先级的元素
+	function dequeue(){
+		var priority = this.dataStore[0].code, index;
+		for(var i=1; i<this.dataStore.length; i++){
+			if(this.dataStore[i].code < priority){
+				priority = this.dataStore[i].code;
+				index = i;
+			}
+		}
+		return this.dataStore.splice(index,1);
+	}
+*/

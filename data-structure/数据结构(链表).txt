@@ -1,0 +1,80 @@
+链表：
+链表是由一组节点组成的集合。每个节点都使用一个对象的引用指向它的后继，指向另一个节点的引用
+叫做链。数组元素靠它们的位置进行引用，链表元素则是靠相互之间的关系进行引用。遍历链表就是跟着
+链接从链表的首元素一直走到尾元素，链表的尾元素指向一个null节点。链表中插入一个节点的效率很高
+需要修改它前面的节点，从其指向新加入的节点，而新加入的节点则指向原来前驱指向的节点。从链表中
+删除一个元素也很简单。将待删除的元素的前驱节点指向待删除元素的后继节点，同时将待删除元素指向
+null,元素就删除成功了。
+
+//节点类
+function Node(element){
+	this.element = element;
+	this.next = null;
+}
+
+//链表类
+function Llist(){
+	this.head = new Node('head');
+	this.find = find;
+	this.insert = insert;
+	this.remove = remove;
+	this.display = display;
+}
+
+//插入或删除节点都要基于节点查找
+function find(item){
+	var currentNode = this.head;
+	while(currentNode.element !== item){
+		currentNode = currentNode.next;
+	}
+	return currentNode;
+}
+
+function insert(newElement,item){
+	var newNode = new Node(newElement),
+		targetNode = this.find(item);
+	newNode.next = targetNode.next;
+	targetNode.next = newNode;
+}
+
+function display(){
+	var currentNode = this.head;
+	while(currentNode.next !== null){
+		print(currentNode.next.element);
+		currentNode = currentNode.next;
+	}
+}
+
+//删除节点要基于该方法
+function findPrevious(item){
+	var currentNode = this.head;
+	while(currentNode.next !== null && currentNode.next.element !== item){
+		currentNode = currentNode.next;
+	}
+	return currentNode;
+}
+
+function remove(item){
+	var previousNode = this.findPrevious(item);
+	if(previousNode.next !== null){
+		previousNode.next = previousNode.next.next;
+	}
+}
+
+双向链表：
+上述链表是单向的即从头元素直到尾元素，但反过来从后向前遍历则没那么简单。通过给node对象增加一个属性
+该属性存储指向前驱的节点，这样就容易很多。但此时向链表中插入一个节点需要更多的工作，我们需要指出该
+节点正确的前驱和后继。但是从链表中删除一个节点时效率高很多，不需要再专门查找前驱节点了。
+
+function Node(element){
+	this.element = element;
+	this.next = null;
+	this.previous = null;
+}
+
+function Llist(){
+	this.head = new Node('head');
+	this.find = find;
+	this.insert = insert;
+	this.remove = remove;
+}

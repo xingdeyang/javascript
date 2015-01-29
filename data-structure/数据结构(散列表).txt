@@ -21,3 +21,126 @@ next指向地址即可，所以你删除节点的开销不会很大，但如果想获得链表中某个节点的值，
 数组索引。然而键的数量是无限的，数组的长度是有限的，一个更显示的目标是让散列函数尽量将键均匀映射到数组中。
 即使使用一个高效的散列函数，仍然存在将两个键映射成同一个值的可能，这种现象称为碰撞
 
+function HashTable(){
+	this.table = new Array(137);
+	this.simpleHash = simpleHash;
+	this.showDistro = showDistro;
+	this.put = put;
+}
+
+//将字符串key的每个字符的ASCII码值相加似乎是一个不错的散列函数，这样散列值就是ASCII码值的和除以数组长度的
+余数
+function simpleHash(){
+	var total = 0;
+	for(var i=0; i<data.length; i++){
+		total += data.charCodeAt(i);
+	}
+	return total%this.table.length;
+}
+
+function put(key,data){
+	this.pos = this.simpleHash(key);
+	this.table[pos] = data;
+}
+
+function showDistro(){
+	var n = 0;
+	for(var i=0; i<this.table.length; i++){
+		if(this.table[i] !== undefined){
+			print(i + ':' + this.table[i]);
+		}
+	}
+}
+
+//实际测试发现上述散列算法是有问题的，分布不均匀且有碰撞，更好的霍纳算法散列函数
+function betterHash(string){
+	var total = 0, H = 37;
+	for(var i=0; i<string.length; i++){
+		total += H * total + string.charCodeAt(i);
+	}
+	total = total % this.table.length;
+	return parseInt(total);
+}
+
+function get(key){
+	return this.data[this.betterHash(key)];
+}
+
+//关于碰撞处理
+当碰撞发生时，我们仍然希望将键存储到散列算法产生的索引位置上，但实际上，不可能将多份数据存储到一个数组单元中，
+开链法是指实现散列的底层数组中，每个数组元素又是一个新的数据结构，比如另一个数组，这样就能存储多个键了。使用
+这种技术，即使两个键散列后的值相同，依然被保存在同样的位置，只不过他们在第二个数组中的位置不一样罢了。
+
+function buildChains(){
+	for(var i=0; i<this.table.length; i++){
+		this.table = new Array();
+	}
+}
+
+var hTable = new HashTable();
+hTable.buildChains();
+
+//那这样put,get方法就必须要重新定义,方法一：开链法
+function put(key,data){
+	var pos = this.betterHash(key), index = 0;
+	if(this.table[pos][index] == undefined){
+		this.table[pos][index] = key;
+		this.table[pos][index+1] = data;
+	}
+	index += 2;
+	else{
+		while(this.table[pos][index] != undefined){
+			index += 2;
+		}
+		this.table[pos][index] = key;
+		this.table[pos][index+1] = data;
+	}
+}
+
+function get(key){
+	var index = 0, pos = this.betterHash(key);
+	if(this.table[pos][index] == key){
+		return this.table[pos][index+1];
+	}
+	index += 2;
+	else{
+		while(this.table[pos][index] != key){
+			index += 2;
+		}
+		return this.table[pos][index+1];
+	}
+	return undefined;
+}
+
+开链法中put将散列后的键值尝试放到该位置上的数组中的第一个单元格，如果该单元格里已经有数据，put()方法会搜索下一个
+位置，直到找到能放置数据的单元格，新put()方法既保存数据也保存键值。该方法使用链中两个连续的单元格，第一个用来保存
+键值，第二个用来保存数据。get()方法先对键值散列，根据散列后的值找到散列表中相应的位置，然后搜索该位置上的链，直到
+找到键值。如果找到，就将紧跟在键值后面的数据返回;如果没有找到，就返回undefined
+
+//方法二：线性探测法（需要新增一个数组values用来存储数据,数组table和values并行工作，当将一个键值保存到数组table中时，
+将数据存入数组values中相应的位置上）
+function put(key,data){
+	var pos = this.betterHash(key);
+	if(this.tables[pos] == undefined){
+		this.tables[pos] = key;.
+		this.values[pos] = data;
+	}
+	else{
+		while(this.tables[pos] !== undefined){
+			pos++;
+		}
+		this.tables[pos] = key;
+		this.values[pos] = data;
+	}
+}
+
+function get(key){
+	var pos = this.betterHash(key);
+	while(this.tables[pos] !== key){
+		if(this.tables[pos] == undefined){
+			return undefined;
+		}
+		pos++;
+	}
+	return this.values[pos];
+}

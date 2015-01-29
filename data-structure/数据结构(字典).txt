@@ -30,7 +30,7 @@ function showAll(){
 	一个对象从其原型链上继承得到的可枚举属性）
 	var keyArr = Object.keys(this.dataStore);
 	for(var i=0,len=keyArr.length; i<len; i++){
-		print(keyArr[i] + '-->' + this.dataStore[key]);
+		print(keyArr[i] + '-->' + this.dataStore[keyArr[i]]);
 	}
 }
 

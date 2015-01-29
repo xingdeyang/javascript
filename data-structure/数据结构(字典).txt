@@ -1,0 +1,52 @@
+字典：
+字典是一种以键--值对形式存储的数据结构。就像电话号码薄里的名字和号码一样。要查找一个电话时，
+先找到名字紧挨着他的电话号码也就找到了。这里的键是指你用来查找的东西，值是查找得到的结果。
+javascript中的object就是以字典的形式设计的。但在Dictionary类中基础是Array类而不是object类。
+因为我们想对字典中的键排序，而javascript中是不能对对象的属性就行排序的。
+
+function Dictionary(){
+	this.dataStore = new Array();
+	this.add = add;
+	this.find = find;
+	this.remove = remove;
+	this.showAll = showAll;
+}
+
+function add(key,value){
+	this.dataStore[key] = value;
+}
+
+function find(key){
+	return this.dataStore[key];
+}
+
+function remove(key){
+	delete this.dataStore[key];
+}
+
+function showAll(){
+	//Object.keys()方法会返回一个由给定对象的所有可枚举自身属性的属性名组成的数组，数组中属性
+	名的排序顺序和使用for-in循环遍历该对象时返回的顺序一致（两者的主要区别在于for-in还会遍历出
+	一个对象从其原型链上继承得到的可枚举属性）
+	var keyArr = Object.keys(this.dataStore);
+	for(var i=0,len=keyArr.length; i<len; i++){
+		print(keyArr[i] + '-->' + this.dataStore[key]);
+	}
+}
+
+function count(){
+	return Object.keys(this.dataStore).length;
+	//这里存在一个疑问是为什么不直接使用this.dataStore.length,这是因为数组当键的类型为字符串时，
+	length属性就不管用了
+}
+
+//字典的主要用途是通过键来取值，我们无须关心数据在字典中的实际存储顺序。然而，很多人都希望看到一个
+有序的字典。数组时可以排序的，但对于键为字符串的数组来讲是行不通的。我们可以解决这个问题
+
+function showSortAll(){
+	var keyArr = Object.keys(this.dataStore).sort();
+	for(var i=0,len=keyArr.length; i<len; i++){
+		print(key + '-->' + this.dataStore[key]);
+	}
+}
+

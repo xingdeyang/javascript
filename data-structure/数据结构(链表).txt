@@ -77,4 +77,48 @@ function Llist(){
 	this.find = find;
 	this.insert = insert;
 	this.remove = remove;
+	this.findLast = findLast;
+}
+
+function find(item){
+	var currentNode = this.head;
+	while(currentNode.element !== item){
+		currentNode = currentNode.next;
+	}
+	return currentNode;
+}
+
+function insert(newItem,item){
+	var targetNode = this.find(item),
+		newNode = new Node(newItem);
+	newNode.next = targetNode.next
+	newNode.previous = targetNode;
+	targetNode.next.previous = newNode;
+	targetNode.next = newNode;
+}
+
+//双向链表的删除节点操作要方便许多
+function remove(item){
+	var targetNode = this.find(item);
+	if(targetNode.next !== null){
+		targetNode.previous.next = targetNode.next;
+		targetNode.next.previous = targetNode.previous;
+	}
+}
+
+function findLast(){
+	var currentNode = this.head;
+	while(currentNode.next !== null){
+		currentNode = currentNode.next;
+	}
+	return currentNode;
+}
+
+//反序遍历链表
+function dispReverse(){
+	var currentNode = this.findLast();
+	while(currentNode.previous !== null){
+		print(currentNode.element);
+		currentNode = currentNode.previous;
+	}
 }

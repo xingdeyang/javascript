@@ -1,8 +1,17 @@
+图的实际信息都保存在边上面，因为它描述了图的结构。我们可以容易像之前提到的那样用二叉树的方式去表示图，但这是
+不对的，二叉树的表现形式相对固定，一个父节点只能最多有两个子节点，而图的结构却要复杂很多，一个顶点既可以有一
+条边也可以有多条边与之相连。我们将表示图的边的方法称为相邻表或者相邻表数组。这种方法将边存储为由顶点的相邻顶点
+列表构成的数组。并以此顶点作为索引存在数组中。使用该方案时，我们在程序中引用一个顶点时，可以高效地访问与这个顶
+点相连的所有顶点的列表。比如，如果顶点2与顶点0,1,3,4相连，并且它存储在数组中索引为2的位置，那么访问这个元素我们
+可以访问到索引为2的位置处由顶点0,1,3,4组成的数组。
+
 function Vertex(label){
 	this.label = label;
 }
 
+//section1:图类
 function Graph(v){
+	//传参v表示顶点数
 	this.vertices = v;
 	this.edges = 0;
 	this.adj = [];
@@ -14,21 +23,83 @@ function Graph(v){
 	this.toString = toString;
 }
 
+//两点确定一线
 function addEdge(v,w){
 	this.adj[v].push(w);
-	this.adb[w].push(v);
+	this.adj[w].push(v);
 	this.edges++;
 }
 
 function showGraph(){
 	for(var i=0; i<this.vertices; i++){
+		console.log(i + '->');
 		for(var j=0; j<this.vertices; j++){
 			if(this.adj[i][j] != undefined){
-				console.log(this.adj[i][j]);
+				console.log(this.adj[i][j] + '');
 			}
 		}
 	}
 }
 
+	---------------------------
+	For Example: 
+	var graph = new Graph(5);
+	graph.addEdge(0,1);
+	graph.addEdge(0,2);
+	graph.addEdge(1,3);
+	graph.addEdge(2,4);
+	graph.showGraph();
+	---------------------------
+	
+	
+	
+//section2:搜索图（深度优先搜索）
+深度优先搜索包括从一条路径的起始顶点开始追溯，直到达到最后一个顶点，然后回溯，继续追溯下一条路径，直到到达最后的顶点，
+如此反复直到没有路径为止。这不是在搜索特定的路径，而是通过搜索图中有哪些路径可以选择。
+function Graph(v){
+	this.vertices = v;
+	this.edges = 0;
+	this.adj = [];
+	for(var i=0; i<this.vertices; i++){
+		this.adj[i] = [];
+		this.adj[i].push('');
+	}
+	this.addEdge = addEdge;
+	this.showGraph = showGraph;
+	this.dfs = dfs;
+	this.marked = [];
+	for(var i=0; i<this.vertices.length; i++){
+		this.marked[i] = false;
+	}
+}
+
+function addEdge(v,w){
+	this.adj[v].push(w);
+	this.adj[w].push(v);
+	this.edges++;
+}
+
+function dfs(v){
+	this.marked[v] = true;
+	if(this.adj[v] != undefined){
+		console.log('visited vertex:' + v);
+	}
+	for(var i in this.adj[v]){
+		if(!this.marked[i]){
+			this.dfs(i);
+		}
+	}
+}
+
+function showGraph(){
+	for(var i=0; i<this.vertices; i++){
+		console.log(i + '->');
+		for(var j=0; j<this.vertices; j++){
+			if(this.adj[i][j] != undefined){
+				console.log(this.adj[i][j] + '');
+			}
+		}
+	}
+}
 
 

@@ -94,3 +94,77 @@ function isEmpty(){
 	}
 	
 */
+
+最新ECMASCRIPT所提供数组操作API:
+1.forEach()方法让数组的每一项都执行一次给定的函数
+	/*
+		Array.prototype.forEach = function(callback){
+			callback.apply(this,[item,index,arr]);
+		};
+		
+		var arr = [2,5,9];
+		function logArrayElements(item,index,array){
+			console.log('a['+ index +'] = ' + item);
+		}
+		arr.forEach(logArrayElements);
+	*/
+
+2.every()方法接受一个返回值为布尔值的函数，对数组中的每个元素都使用该函数，
+如果对于所有元素该函数均返回true,则该方法返回true
+	/*
+		function isEven(num){
+			return num%2 == 0;
+		}
+		var arr = [2,4,6,8,10],
+			isEvent = arr.every(isEvent);
+		if(isEvent){
+			console.log('all number are event');
+		}
+	*/
+	
+3.some()方法接受一个返回值为布尔值的函数，只要数组中有一个元素使得该函数返回true,
+该方法就返回true
+	/*
+		function isOdd(num){
+			return num%2 !== 0;
+		}
+		var arr = [1,2,4,6,8],
+			isOdd = arr.some(isOdd);
+		if(isOdd){
+			console.log('some are odd');
+		}
+		else{
+			console.log('all are even');
+		}
+	*/
+	
+4.reduce()方法接受一个函数返回一个值，该方法会从一个累加值开始，不断对累加值和数组
+中的后续元素调用该函数，直到数组中的最后一个元素，最后返回得到的累加值
+	/*
+		function add(runningTotal,item){
+			return runningTotal + item;
+		}
+		var arr = [1,2,3,4,5,6,7,8,9,10];
+		console.log(arr.reduce(add));	//55
+	*/
+	
+5.生成新数组的迭代器方法map()和filter(),map和forEach非常相似都是对数组的每一个元素
+执行一个函数，但两者的区别在于map方法会返回一个新的数组，该数组的元素是对原有元素执行
+函数后的得到的：
+	/*
+		function curve(grade){
+			return grade += 5;
+		}
+		var grades = [67,81,77,65];
+		console.log(grades.map(curve)); //[72,86,82,70]
+	*/
+	
+6.filter()方法和every()方法类似传入一个返回布尔值的函数，该方法也返回一个新数组,该数组
+的元素为应用函数后结果为true的元素.所以该方法常被用来过滤出符合特定条件的元素
+	/*
+		function isEven(number){
+			return number%2 == 0;
+		}
+		var arr = [2,4,6,8,9,10];
+		console.log(arr.filter(isEven)); //[2,4,6,8,10]
+	*/

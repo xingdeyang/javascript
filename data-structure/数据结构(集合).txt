@@ -1,0 +1,97 @@
+集合：
+集合是由一组无序但彼此之间又有一定相关性的成员构成的，每个成员在集合中只能出现一次。在数学中，用大括号将
+一组成员括起来表示集合，比如{0,1,2,3}集合中成员的顺序是任意的，但是必须确保每个成员只能出现一次。关于集合
+我们需要知道的几个概念是：空集，子集，交集，并集，差集或者补集
+
+function Set(){
+	this.dataStore = [];
+	this.add = add;
+	this.remove = remove;
+	this.size = size:
+	this.union = union;
+	this.intersect = intersect;
+	this.subset = subset;
+	this.difference = difference;
+	this.show = show;
+}
+
+function add(data){
+	//需要先检查集合中是否已存在，是则不能添加
+	if(this.dataStore.indexOf(data) < 0){
+		this.dataStore.push(data);
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+function remove(data){
+	var pos = this.dataStore.indexOf(data);
+	if(pos > -1){
+		this.dataStore.splice(pos,1);
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+function union(set){
+	var tempSet = new Set();
+	for(var i=0,len=this.dataStore.length; i<len; i++){
+		tempSet.add(this.dataStore[i]);
+	}
+	for(var j=0,num=set.size(); j<num; j++){
+		tempSet.add(set.dataStore[j]);
+	}
+}
+
+//定义差集前要先定义一个判断是否存在的方法
+function contain(data){
+	if(this.dataStore.indexOf(data) > -1){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+function intersect(set){
+	var tempSet = new Set();
+	for(var i=0,len=this.dataStore.length; i<len; i++){
+		if(set.contain(this.dataStore[i])){
+			tempSet.add(this.dataStore[i]);
+		}
+	}
+	return tempSet;
+}
+
+function size(){
+	return this.dataStore.length;
+}
+
+function subset(set){
+	if(this.size() > set.size()){
+		//若长度比set还大则不可能是set子集
+		return false;
+	}
+	else{
+		for(var i=0,len=this.dataStore.length; i<len; i++){
+			if(!set.contain(this.dataStore[i])){
+				return false;
+			}
+		}
+		return true;
+	}
+}
+
+function difference(set){
+	var tempSet = new Set();
+	for(var i=0,len=this.dataStore.length; i<len; i++){
+		if(!set.contain(this.dataStore[i])){
+			tempSet.add(this.dataStore[i]);
+		}
+	}
+	return tempSet;
+}

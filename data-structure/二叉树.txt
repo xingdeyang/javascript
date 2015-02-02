@@ -1,0 +1,191 @@
+树是一种非线性的数据结构，以分层的方式存储数据。树被用来存储具有层级关系的数据，比如文件系统的文件，
+选择树比如二叉树而不是那些基本的数据结构，是因为在二叉树上进行查找非常快，为二叉树添加或者删除元素
+也非常快。
+
+function Node(data,left,right){
+	this.data = data;
+	this.left = left;
+	this.right = right;
+	this.show = show;
+}
+
+function show(){
+	return this.data;
+}
+
+//BST(binary search tree)
+function BST(){
+	this.root = null;
+	this.insert = insert;
+	this.inOrder = inOrder;
+}
+
+funtion insert(data){
+	var newNode = new Node(data,null,null);
+	if(this.root == null){
+		this.root = newNode;
+		return;
+	}
+	var currentNode = this.root, parentNode;
+	while(true){
+		parentNode = currentNode;
+		if(data < currentNode.data){
+			currentNode = currentNode.left;
+			if(currentNode == null){
+				parentNode.left = newNode;
+				break;
+			}
+		}
+		else{
+			currentNode = currentNode.right;
+			if(currentNode == null){
+				parentNode.right = currentNode;
+				break;
+			}
+		}
+	}
+}
+
+//二叉树遍历的三种方式：中序（升序访问）、先序、后序
+function inOrder(rootNode){
+	if(!(rootNode == null)){
+		inOrder(rootNode.left);
+		console.log(rootNode.show());
+		inOrder(rootNode.right);
+	}
+}
+
+//先序
+function preOrder(rootNode){
+	if(!(rootNode == null)){
+		console.log(rootNode.show);
+		inOrder(rootNode.left);
+		inOrder(rootNode.right);
+	}
+}
+
+//后序
+function postOrder(rootNode){
+	if(!(rootNode == null)){
+		postOrder(rootNode.left);
+		postOrder(rootNode.right);
+		console.log(rootNode.show());
+	}
+}
+
+//二叉树最为人所知的便是其高效的查找效率（查找给定值，最大值，最小值）
+
+function getMin(){
+	var currentNode = this.root;
+	while(currentNode.left){
+		currentNode = currentNode.left;
+	}
+	return currentNode.data;
+}
+
+function getMax(){
+	var currentNode = this.root;
+	while(currentNode.right){
+		currentNode = currentNode.right;
+	}
+	return currentNode.data;
+}
+
+function find(data){
+	var currentNode = this.root;
+	while(currentNode !== null){
+		if(currentNode.data == data){
+			return currentNode;
+		}
+		else if(data < currentNode.data){
+			currentNode = currentNode.left;
+		}
+		else{
+			currentNode = currentNode.right;
+		}
+	}
+	return false;
+}
+
+//计数操作(统计二叉树中各数据出现次数)
+
+	//先修改node的定义
+	function Node(data,left,right){
+		this.data = data;
+		this.count = 1;
+		this.left = left;
+		this.right = right;
+		this.show = show;
+	}
+	
+	//修改insert定义
+	funtion insert(data){
+		var newNode = this.find(data);
+		if(newNode){
+			newNode.count++;
+			return;
+		}
+		newNode = new Node(data,null,null);
+		if(this.root == null){
+			this.root = newNode;
+			return;
+		}
+		var currentNode = this.root, parentNode;
+		while(true){
+			parentNode = currentNode;
+			if(data < currentNode.data){
+				currentNode = currentNode.left;
+				if(currentNode == null){
+					parentNode.left = newNode;
+					break;
+				}
+			}
+			else{
+				currentNode = currentNode.right;
+				if(currentNode == null){
+					parentNode.right = currentNode;
+					break;
+				}
+			}
+		}
+	}
+	
+//删除节点也是二叉树中最为复杂的操作，所需要考虑的情况较多，在插入节点时给节点赋值父节点引用
+function remove(data){
+	var targetNode = this.find(data), 
+		parentNode = targetNode.parent,
+		linkNode, linkParentNode, temp;
+	if(!targetNode){return;}
+	if(!parentNode){return;}
+	//无子节点
+	if(!targetNode.left && !targetNode.right){
+		if(parentNode.left && parentNode.left == targetNode){
+			parentNode.left = null;
+		}
+		if(parentNode.right && parentNode.right == targetNode){
+			parentNode.right = null;
+		}
+	}
+	//一个子节点
+	else if(!(targetNode.left && targetNode.right)){
+		linkNode = targetNode.left || targetNode.right;
+		linkNode.parent = parentNode;
+		parentNode.left == targetNode ? (parentNode.left = linkNode) : (parentNode.right = linkNode);
+		
+	}
+	//两个子节点
+	else{
+		linkNode = this.findMax(targetNode.left);
+		temp = targetNode.left;
+		linkParentNode = linkNode.parent;
+		parentNode.left == targetNode ? (parentNode.left = linkNode) : (parentNode.right = linkNode);
+		if(linkParentNode == targetNode){
+			return;
+		}
+		else{
+			linkParentNode.right = null;
+			linkNode.left = temp;
+			temp.parent = linkNode;
+		}
+	}
+}

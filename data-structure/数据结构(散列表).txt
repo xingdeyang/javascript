@@ -122,7 +122,7 @@ function get(key){
 function put(key,data){
 	var pos = this.betterHash(key);
 	if(this.tables[pos] == undefined){
-		this.tables[pos] = key;.
+		this.tables[pos] = key;
 		this.values[pos] = data;
 	}
 	else{

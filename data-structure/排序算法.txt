@@ -94,6 +94,29 @@ function quickSort(arr){
 	return self(smaller).concat(base,self(larger));
 }
 
+//二分法插入排序
+function binaryInsertSort(arr){
+	for(var i=0; i<arr.length; i++){
+		var start,end,mid,temp;
+		start = 0;
+		end = i-1;
+		temp = arr[i];
+		while(start <= end){
+			mid = Math.floor((start + end) / 2);
+			if(arr[mid] > temp){
+				end = mid - 1;
+			}
+			else{
+				start = mid + 1;
+			}
+		}
+		for(var j=i-1; j>end; j--){
+			arr[j + 1] = arr[j];
+		}
+		arr[end + 1] = temp;
+	}
+}
+
 
 
 

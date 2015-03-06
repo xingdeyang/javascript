@@ -30,7 +30,7 @@ function SelectionSort(arr){
 }
 
 
-//插入排序法
+//插入排序法（适合部分已经排好的序的数据集合，因为对于该部分数据而言对比复杂度并没有降低但是交换复杂度为0）
 /*
 step1:
 
@@ -55,9 +55,11 @@ step3:
 */
 function insertSort(arr){
 	var temp, inner, len = arr.length;
+	//outer的存在是为了保证遍历到每个未排序的数据，从而插入到已经排好序的数据中的合适自己的位置
 	for(var outer=1; outer<len; outer++){
 		temp = arr[outer];
 		inner = outer;
+		//while循环就是保证此次插入数据插入到正确的位置
 		while(inner > 0 && arr[inner-1] >= temp){
 			arr[inner] = arr[inner-1];
 			inner--;

@@ -36,4 +36,64 @@ step1:插入节点时是插入到数组的最后一个单元（也就是堆二叉树结构中最后一级的最后，
 		关键字值有可能大于它的父节点关键字值，所以需要向上遍历也就是第二个步骤）
 step2:向上筛选比较简单，因为每一个节点只有一个父节点，目标节点只需要和它的父节点换位即直到目标
 		节点在一个合适的位置
+		
+//For example		
+function Heap(){
+	this.dataStore = [];
+	this.insert = insert;
+	this.remove = remove;
+	this.triggerUp = triggerUp;
+	this.triggerDown = triggerDown;
+}
 
+function Node(key,data){
+	//key指优先级值，data指节点其他数据
+	this.key = key;
+	this.data = data;
+}
+
+Node.prototype.getKey = function(){
+	return this.key;
+};
+
+Heap.prototype.insert = function(key,data){
+	var len = this.dataStore.length,
+		newNode = new Node(key,data);
+	this.dataStore[len] = newNode;
+	this.triggerUp(newNode);
+};
+
+Heap.prototype.triggerUp = function(newNode){
+	var dataStore = this.dataStore,
+		bottomIndex = dataStore.length - 1,
+		parentIndex = Math.floor((bottomIndex - 1)/2);
+	while(bottomIndex > 0 && dataStore[parentIndex].getKey() < newNode.getKey()){
+		dataStore[bottomIndex] = dataStore[parentIndex];
+		bottomIndex = parentIndex;
+		parentIndex = Math.floor((bottomIndex - 1)/2);
+	}
+	dataStore[parentIndex] = newNode;
+};
+
+Heap.prototype.remove = function(){
+	var dataStore = this.dataStore,
+		root = dataStore[0] = dataStore[dataStore.length - 1];
+	dataStore.pop();
+	this.triggerDown(root);
+};
+
+Heap.prototype.triggerDown = function(root){
+	var dataStore = this.dataStore,
+		currentIndex = 0,
+		nextIndex = dataStore[2*currentIndex + 1].getKey() > dataStore[2*currentIndex + 2] ? 2*currentIndex + 1 : 2*currentIndex + 2;
+	while(nextIndex < dataStore.length && dataStore[nextIndex] > root){
+		data[Math.floor((nextIndex - 1)/2)] = dataStore[nextIndex];
+		currentIndex = nextIndex;
+		nextIndex = dataStore[2*currentIndex + 1].getKey() > dataStore[2*currentIndex + 2] ? 2*currentIndex + 1 : 2*currentIndex + 2;
+	}
+	dataStore[nextIndex] = root;
+};
+
+堆排序：
+由上述方式我们可以生成一种全新的排序算法：堆排序
+堆排序的基本思想很简单就是利用堆的insert方法不停插入新数据，然后重复利用堆的remove方法移除数据项从而生成一个有序的数据序列

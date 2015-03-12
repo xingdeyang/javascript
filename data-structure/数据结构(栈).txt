@@ -16,35 +16,35 @@
 要特别注意进栈时游标先上移一位然后插入元素，而出栈是先返回栈顶元素然后游标下移一位）
 function Stack(){
 	this.dataStore = [];
-	this.top = 0;
+	this.top = -1;
 	this.push = push;
 	this.pop = pop;
 	this.peek = peek;
 }
 
 function push(element){
-	this.dataStore[this.top++] = element;
+	this.dataStore[++this.top] = element;
 }
 
 function pop(){
 	//最顶层元素其实没有删除，但在概念上已经不存在因为top已变
-	return this.dataStore[--this.top];
+	return this.dataStore[this.top--];
 }
 
 function peek(){
-	return this.dataStore[this.top - 1];
+	return this.dataStore[this.top];
 }
 
 function length(){
-	return this.top;
+	return this.top + 1;
 }
 
 function clear(){
-	this.top = 0;
+	this.top = -1;
 }
 
 function isEmpty(){
-	return this.top == 0;
+	return this.top == -1;
 }
 
 //通过链表来实现栈结构（此时要抛弃在脑海中的固有“叠盘子”的对栈结构的“竖”印象，我们只

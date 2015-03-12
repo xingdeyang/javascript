@@ -63,6 +63,41 @@ function remove(item){
 	}
 }
 
+双端链表：
+双端链表与传统链表非常相似，但是它有一个新增的特性即对最后一个链节点的引用，就像对第一个链节点的
+引用那样。对最后一个链节点的引用便于我们再链尾插入一个新节点。当然仍然可以在普通的链表中尾部插入
+一个节点，但这样需要我们遍历整个链表。
+function FirstLastList(){
+	this.first = null;
+	this.last = null;
+	this.find = find;
+	this.insertLast = insertLast;
+	this.insertFirst = insertFirst;
+}
+
+FirstLastList.prototype.insertFirst = function(val){
+	var newNode = new Node(val);
+	if(isEmpty()){
+		this.first = newNode;
+	}
+	else{
+		newNode.next = this.first;
+		this.first = newNode;
+	}
+};
+
+FirstLastList.prototype.insertLast = function(val){
+	var newNode = new Node(val);
+	if(isEmpty()){
+		this.first = newNode;
+	}
+	else{
+		this.last.next = newNode;
+		this.last = newNode;
+	}
+};
+
+
 双向链表：
 上述链表是单向的即从头元素直到尾元素，但反过来从后向前遍历则没那么简单。通过给node对象增加一个属性
 该属性存储指向前驱的节点，这样就容易很多。但此时向链表中插入一个节点需要更多的工作，我们需要指出该

@@ -2,7 +2,7 @@
 关于同源策略：
 
 	浏览器都有一个同源策略（处于安全策略），其限制之一就是我们不能通过ajax请求不同源的文档及数据，限制二就是浏览器中不同域的
-	框架之间是不能进行js的交互的（互相访问）。在此之前自己对同源策略的理解有些片面，没有意识到不同域的框架（iframe）之间是不能
+	框架之间是不能进行js的交互的（api互相访问）。在此之前自己对同源策略的理解有些片面，没有意识到不同域的框架（iframe）之间是不能
 	进行js交互的，但如果反向推理其实就很好理解为什么不可以了。
 	
 什么是跨域：
@@ -20,5 +20,25 @@
 		-Allow-Credentials : true的响应头，那么浏览器将不会把响应的数据结果传递给发出请求的脚本程序。从上面我们可以得出一个小规律，
 		那就是在浏览器和服务端的协商过程中，请求头和响应头唯一的不同之处就是响应头多了Access-Control-Allow，这将便于我们理解和记忆。
 		还例如在服务端设置可以使用哪些自定义http请求头时要使用Access-Control-Allow-Headers: x-pingpong,这样在请求时就可以设置x-pingpong
-		这样的请求头了。
-	
+		这样的请求头了。响应头Access-Control-Allow-Methods ： POST,GET表明服务器可以接受的请求方法，这仅限于访问控制的场景下。当然，
+		这种机制需要浏览器检测到响应的设置从而支持允许ajax进行跨域访问，不论是get还是post请求。
+		
+	2.通过jsonp跨域
+		jsonp可以很好的帮助我们实现get请求的跨域，它有两部分组成：回调函数和数据。回调函数是当响应带来时在页面中调用的函数。而数据就是
+		传入回调函数中的json数据。在js代码中我们通过调用XMLHttpRequest请求不同域上的数据时，是不可以的。但是在页面中引入不同域的js脚本
+		文件确实可以的，jsonp正是利用这个特性来实现的。
+		For example:
+		<script src="http://example.com/data.php?callback=dosomething"></script>
+		js文件载入成功后就会执行我们在url参数中指定的函数，并且会把我们需要的json数据作为参数传入。所以jsonp是需要服务端进行配合完成的。
+		For example:
+		<?php
+			$callbakc = $_GET['callback'];
+			$data = array('derick','nana','test');
+			echo $callback.'('.json_encode($data).')';
+		?>
+		优缺点：jsonp这种方式不像XMLHttpRequest那样受同源策略的限制，兼容性好，在任何浏览器中都可以运行，但它的缺点就是前面所提到的
+					不能发起post的跨域请求，不能解决两个不同域的两个页面之间进行javascript互相调用的问题。
+					
+	3.通过document.domain来跨子域
+		前面提到过不同域的框架（iframe）之间是可以获取window对象的，但却无法获取响应的属性和方法（也即是前面说到的javascript无法相互调用），
+		

@@ -43,5 +43,75 @@
 					
 	3.通过document.domain来跨子域
 		前面提到过不同域的框架（iframe）之间是可以获取window对象的，但却无法获取响应的属性和方法（也即是前面说到的javascript无法相
-		互调用），
+		互调用）。比如一个页面的地址是http://www.example.com/a.html，在这个页面中有一个iframe,它的src是http://example.com/b.html,
+		很显然这个页面和里面的iframe框架是不同域的，所以我们无法通过在页面中写js代码来获取iframe中的东西的.
+		For example:
+		<script>
+			var iframe = document.getElementById('iframe'),
+				  win = iframe.contentWindow,//可以获取到iframe里的window对象，但该window的属性和方法几乎是不可用的
+				  doc = win.document,//获取不到
+				  name = win.name;//获取不到
+		</script>
+		<iframe id="iframe" src="http://example.com/b.html" ></iframe>
+		这个时候document.domian就可以发挥作用了，我们只需要把http://www.example.com/a.html和http://example.com/b.html这两个页面
+		的document.domain都设置成相同的域名就可以了。但要注意的是，document.domain的设置是有限制的，我们只能把document.domain
+		设置成自身或者更高一级的父域，且主域必须相同。
+		For example:
+		//页面a.html
+		<iframe id="iframe" src="http://example.com/b.html"></iframe>
+		<script>
+			document.domain = 'example.com';
+		</script>
+		//页面b.html
+		<script>
+			document.domain = 'example.com';//在iframe载入这个页面也设置document.domain,使其与主页面的document.domain相同
+		</script>
 		
+	4.借助iframe解决post请求跨域问题
+		在不考虑cors的情况下，ajax不能实现post跨域请求，那页面中我们最常用的发起post请求的方式就是表单的同步提交，在表单属性中有一个target,
+		我们可以将其设置为页面中的一个iframe的name属性，也就是说页面中要同时有一个iframe节点存在。这样表单的post请求响应就会给到该iframe
+		中，这时就会存在一个问题，我们最终要拿到post请求的响应结果来执行后续业务逻辑，况且因为是同步前端是无法像ajax那样通过事件和回调函数
+		的配合来准确获取数据，那就只能请求服务端的支持了，比如我们可以让服务端返回html且在html中包含一段js脚本,也只能通过这种方式来进行数据
+		的传递，例如：
+		For example:
+		<script>
+			location.href = "http://主页面域名/proxy.html?data=" + data:
+		</script>
+		至于为什么上述这样做，其实很好理解，服务端是知道响应的数据，但是怎样才能让不同域的主页面的js脚本获取到呢，一种取巧的方式就是输出一段
+		js脚本让iframe的页面进行跳转到和主页面同域的一个代理页面同时将数据通过url的参数形式传递过去，这样在proxy.html中是可以取到以参数形式
+		传递来的数据，同时proxy.html和主页面是同一域，它们之间是可以进行javascript的互相调用的，可以直接在proxy.html中调用主页的post请求“回调”
+		函数同时将数据传递出去：
+		For example:
+		//主页面
+		function callabck(data){
+			//.....
+		}
+		//proxy.html
+		var data = getParameter(location.href),
+			  callback = parent.callback;
+		callback(data);
+		
+	5.利用html5:postMessage
+	window.postMessage(message,targetOrigin)是html5新引进的特性，可以使用它来向其他的window对象发送消息，无论这个windwo对象是属于同源
+	还是不同源，目前ie8+,firefox,chrome,opera等浏览器都已经支持window.postMessage方法。可以用来帮助我们解决页面和其打开的新窗口的数据传递，
+	多窗口之间的消息传递，页面与嵌套的iframe的消息传递。
+	postMessage(data,origin)接受两个参数：data是要传递的数据，html5规范中提到该参数可以是javascript的任意基本数据类型或者可复制的对象，然而
+	并不是所有浏览器都支持这点，部分浏览器只能处理字符串参数，所以我们还是在传递参数时使用JSON.stringify将对象参数序列化；origin是字符串参数，
+	指明目标窗口的源，也即协议+主机+端口号【+url】，url会被忽略所以可不写，postMessage方法只会将数据传递给指定窗口，当然也可以设置为”*“，
+	这样可以传递给任意窗口，如果要指定和当前窗口同源的话设置为”/“。
+	For example:
+	//http://test.com/index.html
+	<div style=""></div>
+	<iframe  id="child" src="http://lslib.com/lslib.html"></iframe>
+	//我们可以在http://test.com/index.html中通过postMessage方法向跨域的iframe页面传递消息：
+	window.onload = function(){
+		window.frames[0].postMessage('hello world','http://lslib.com');
+	};
+	
+	//http://lslib.com/lslib.html
+	window.addEventListener('message',function(e){
+		//注意e对象包含了传递消息的具体数据等详细信息，具体可在控制台打印查看
+		window.parent.postMessage('i have receive the message' + e.data,'*');
+	});
+	看到这里不知是否有似曾相识的感觉，那就是html5推出的web workers规范中（浏览器端应用）创建新线程便于我们处理计算密集型逻辑中，也是应用
+	postMessage来进行线程间的消息传递。关于浏览器的兼容性问题前面提到过ie8+已经也支持了，还有像html5的其他新api比如localstorage也是如此。

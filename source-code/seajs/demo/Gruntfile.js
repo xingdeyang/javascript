@@ -5,6 +5,13 @@ module.exports = function(grunt){
         script = transport.script.init(grunt);
 
     grunt.initConfig({
+        //监听文件改动自动触发构建工作
+        watch: {
+            scripts: {
+                files: ['public/javascripts/movie/**/*.js'],
+                tasks: ['copy','transport','concat','uglify','clean']
+            }
+        },
         //将dev环境下入口文件拷贝到产出目录
         copy: {
             movie: {
@@ -60,6 +67,7 @@ module.exports = function(grunt){
         }
     });
 
+    grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-cmd-transport');
     grunt.loadNpmTasks('grunt-cmd-concat');
@@ -67,6 +75,6 @@ module.exports = function(grunt){
     grunt.loadNpmTasks('grunt-contrib-clean');
 
 
-    grunt.registerTask('default',['copy','transport','concat','uglify','clean']);
+    grunt.registerTask('default',['copy','transport','concat','uglify','clean','watch']);
     //'transport','concat','uglify','clean'
 };

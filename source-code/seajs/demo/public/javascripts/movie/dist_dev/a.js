@@ -7,6 +7,7 @@ define(function(require,exports,module){
 
     exports.say = function(){
         alert('xx');
+        alert('test456');
         b.say();
     };
 });

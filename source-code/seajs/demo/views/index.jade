@@ -1,0 +1,11 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+  script(src="/javascripts/seajs-3.0.0/dist/sea-debug.js",type="text/javascript")
+  script
+      |seajs.use(['/javascripts/movie/dist/a.js'],function(a){
+      | a.say();
+      |});
+

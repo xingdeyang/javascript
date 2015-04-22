@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<!--
+    上个demo中我们提到的:host用于在shadow dom中选择宿主的样式选择器，那么我们是否可以选择宿主元素的父元素呢，答案是:host-context
+    这个特性的确很酷，因为我们只用过.parent > child这样的选择器，但从没反过来选择过，当然这仅限于shadow dom中。
+-->
+<div class="serious">
+    <p class="serious-widget">
+        大家好我十分的严肃
+    </p>
+</div>
+
+<div class="playful">
+    <p class="playful-widget">
+        漂亮的小云彩效果……
+    </p>
+</div>
+
+<template class="widget-template">
+    <style>
+        :host-context(.serious) {
+            width: 250px;
+            height: 50px;
+            padding: 50px;
+            font-family: '微软雅黑';
+            font-weight: bold;
+            font-size: 24px;
+            color: black;
+            background: tomato;
+        }
+
+        :host-context(.playful) {
+            width: 250px;
+            height: 50px;
+            padding: 50px;
+            font-family: '华文行楷';
+            font-size: 24px;
+            color: white;
+            background: deepskyblue;
+        }
+    </style>
+    <content></content>
+</template>
+<script>
+    var root1 = document.querySelector('.serious-widget').createShadowRoot();
+    var root2 = document.querySelector('.playful-widget').createShadowRoot();
+    var template = document.querySelector('.widget-template');
+    root1.appendChild(document.importNode(template.content, true));
+    root2.appendChild(document.importNode(template.content, true));
+</script>
+
+</body>
+</html>

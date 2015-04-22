@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<!--利用select属性告诉content标签有选择性的插入内容，select属性使用css选择器来选取想要展示的内容，
+例如<content select=".last-name"> 会在影子宿主里寻找任何样式名称为 .last-name 的元素。如果找到一个匹配的元素，
+其就会将这个元素渲染到 shadow DOM 中对应的 <content> 标签中去。-->
+<div class="bio">
+    <h1 class="first-name">劳勃</h1>
+    <span class="last-name">多德森</span>
+    <span class="city">旧金山</span>
+    <span class="state">加利福尼亚州</span>
+    <p>我专注前端开发（HTML/CSS/JavaScript），还会一点 Node 和 Ruby。</p>
+    <p>从事写作，偶尔也会写点博客。</p>
+    <p>尽管我是南方人，但我最近都在美丽的旧金山工作和生活。</p>
+</div>
+
+<template class="bio-template">
+    <dl>
+        <dt>名字</dt>
+        <dd><content select=".first-name"></content></dd>
+        <dt>姓氏</dt>
+        <dd><content select=".last-name"></content></dd>
+        <dt>城市</dt>
+        <dd><content select=".city"></content></dd>
+        <dt>州</dt>
+        <dd><content select=".state"></content></dd>
+    </dl>
+</template>
+<script>
+    var container = document.querySelector('.bio'),
+        sd = container.createShadowRoot(),
+        template = document.querySelector('.bio-template');
+    sd.appendChild(document.importNode(template.content,true));
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<!--截止现在我们介绍了在shadow dom中如何冲破壁垒设置主dom中的样式，那反过来如何在主dom中去设置shadow dom中样式呢，
+那就使用::shadow伪类选择器，通过实际效果我们发现通过::shadow伪类选择器的优先级要高于影子dom内的选择器优先级，结合
+我们前面提到的影子dom中:host的优先级低于页面选择器中的优先级我们是不是可以认为凡是主dom中定义的选择器优先级都要高于
+影子dom中选择器呢？？？-->
+
+<style>
+    .sign-up::shadow #username,
+    .sign-up::shadow #password {
+        font-size: 10px;
+        border: 1px solid red;
+    }
+
+    .sign-up::shadow #btn {
+        font-size: 18px;
+    }
+</style>
+<div class="sign-up"></div>
+
+<template class="sign-up-template">
+    <style>
+        #username,
+        #password {
+            font-size: 10px;
+        }
+    </style>
+    <div>
+        <input type="text" id="username" placeholder="用户名">
+    </div>
+    <div>
+        <input type="password" id="password" placeholder="密码">
+    </div>
+    <button id="btn">注册</button>
+</template>
+
+<script>
+    var host = document.querySelector('.sign-up');
+    var root = host.createShadowRoot();
+    var template = document.querySelector('.sign-up-template');
+    root.appendChild(document.importNode(template.content, true));
+</script>
+
+</body>
+</html>

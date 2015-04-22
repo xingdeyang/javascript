@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<!--宿主类型选择器（只能选择宿主），因为:host是伪类选择器，我们可以将其用在多个标签上来改变我们组建的外观,当然我们还可以根据
+id,class等来进行匹配选择，通过使用*选择器我们可以创造应用于全部:host元素的默认样式。还要注意的是宿主元素也可以使用:host(:hover)
+,:host(:active)这样的特殊伪类-->
+<p>我的段落</p>
+<div>我的div</div>
+<button>我的button</button>
+<template class="shadow-template">
+    <style>
+        :host(p){
+            color: blue;
+        }
+        :host(div){
+            color: green;
+        }
+        :host(button){
+            color: red;
+        }
+        :host(*){
+            font-size: 24px;
+        }
+    </style>
+    <content></content>
+</template>
+
+<script>
+    // 给每一个元素创建一个影子根
+    var root1 = document.querySelector('p').createShadowRoot();
+    var root2 = document.querySelector('div').createShadowRoot();
+    var root3 = document.querySelector('button').createShadowRoot();
+
+    // 对于每一个影子根使用同一个模板
+    var template = document.querySelector('.shadow-template');
+
+    // 把每一个模板嵌入影子根中，注意一下不同的 :host 样式对显示效果的影响
+    root1.appendChild(document.importNode(template.content, true));
+    root2.appendChild(document.importNode(template.content, true));
+    root3.appendChild(document.importNode(template.content, true));
+</script>
+
+</body>
+</html>

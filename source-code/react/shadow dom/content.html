@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<!--利用content标签实现影子宿主里的内容以影子根中的结构形式去呈现-->
+<div id="test">hello world</div>
+<template class="mytemplate">
+    <p>重新定义<content></content>的结构</p>
+</template>
+<script>
+    var test = document.getElementById('test'),
+        sd = test.createShadowRoot(),
+        template = document.querySelector('.mytemplate');
+    sd.appendChild(document.importNode(template.content,true));
+</script>
+</body>
+</html>

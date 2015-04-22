@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<!--shadow dom基本用法，结果表明影子宿主里面的内容没有被渲染反而影子根里的内容被渲染-->
+<div id="test">hello world</div>
+<script>
+    var test = document.getElementById('test'),
+        sd = test.createShadowRoot();
+    var p1 = document.createElement('p');
+    p1.innerHTML = '一只野生的影子标题出现了';
+    var p2 = document.createElement('p');
+    p2.innerHTML = '一些影子文本也探头探脑滴冒了出来…';
+    sd.appendChild(p1);
+    sd.appendChild(p2);
+</script>
+</body>
+</html>

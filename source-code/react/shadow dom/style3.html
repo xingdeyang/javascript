@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<!--分布式节点：来自页面宿主并通过<content>标签添加到shadow dom中的内容被称为分布式节点，那要如何给分布式节点
+添加样式呢，起初以为这样：
+<div class="some-shadow-host">
+  <button>Hello World!</button>
+</div>
+
+<template>
+  <style>
+    :host {
+      ...
+    }
+
+    button {
+      font-size: 18px;
+    }
+  </style>
+  <content></content>
+</template>
+却发现button样式对分布式节点不起作用，实际上分布式节点的样式渲染需要用到:content伪类选择器(::content > selector)。这样做可以很好的区分
+影子模板中的button和出现在<content>标签中的button
+-->
+
+<div class="widget">
+    <button>分布节点碉堡啦！</button>
+</div>
+
+<template class="widget-template">
+    <style>
+        ::content > button {
+            font-size: 18px;
+            color: white;
+            background: tomato;
+            border-radius: 10px;
+            border: none;
+            padding: 10px;
+        }
+    </style>
+    <content select=""></content>
+</template>
+
+<script>
+    var host = document.querySelector('.widget');
+    var root = host.createShadowRoot();
+    var template = document.querySelector('.widget-template');
+    root.appendChild(document.importNode(template.content, true));
+</script>
+
+</body>
+</html>

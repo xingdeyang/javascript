@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<!--影子边界表示分离常规dom和影子dom的壁障，影子边界的主要好处就是防止dom中的样式泄露到shadow dom中，当然
+也保护主文档dom不受shadow dom中样式的侵袭，那如何改变这一规则呢？
+1.通过:host更改宿主样式
+结论：:host选择器的优先级低于页面选择器的优先级
+-->
+
+<style>
+    .widget {
+        text-align: center;
+    }
+</style>
+
+<div class="widget">
+    <p>Hello World!</p>
+</div>
+
+<script>
+    var host = document.querySelector('.widget');
+    var root = host.createShadowRoot();
+    root.innerHTML = '<style>' +
+    ':host {' +
+    '  border: 2px dashed red;' +
+    '  text-align: left;' +
+    '  font-size: 28px;' +
+    '} ' +
+    '</style>' +
+    '<content></content>';
+</script>
+
+</body>
+</html>

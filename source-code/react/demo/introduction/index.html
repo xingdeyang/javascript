@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="./build/react.js"></script>
+    <script src="./build/JSXTransformer.js"></script>
+    <script src="./build/jquery.min.js"></script>
+  </head>
+  <body>
+    <script type="text/jsx">
+        var data = [{
+            author: 'derick',
+            text: 'i am derick'
+        },{
+            author: 'nana',
+            text: 'i am nana'
+        }];
+        var Comment = React.createClass({
+            render: function(){
+                //注意this.props.children表示该组件的所有子节点
+                return (
+                    <li className="comment">
+                        <a>{this.props.author}</a>
+                        {this.props.children}
+                    </li>
+                );
+            }
+        });
+        var CommentList = React.createClass({
+            render: function(){
+                //注意遇到代码块就以{}包裹，以及组件属性this.props的用法（组件属性往往在父组件调用该组件时定义）
+                return (
+                    <div className="commentList">
+                    {
+                        this.props.comments.map(function(item){
+                            return (
+                                <Comment author={item.author}>
+                                    <span>{item.text}</span>
+                                </Comment>
+                            )
+                        })
+                    }
+                    </div>
+                );
+            }
+        });
+        var CommentForm = React.createClass({
+            handleSubmit: function(e){
+                e.preventDefault();
+                var author = this.refs.author.getDOMNode().value,
+                    text = this.refs.text.getDOMNode().value;
+                //注意获取组件内dom节点的方式
+                this.refs.author.getDOMNode().value = '';
+                this.refs.text.getDOMNode().value = '';
+                //调用在父组件中定义的该组件的回调方法
+                this.props.onCommentSubmit({author:author,text:text});
+                return;
+            },
+            render: function(){
+                return (
+                    <form className="commentForm" onSubmit={this.handleSubmit}>
+                        <input type="text" ref="author" placeholder="your name" />
+                        <input type="text" ref="text" placeholder="say something" />
+                        <input type="submit" value="Post" />
+                    </form>
+                );
+            }
+        });
+        var CommentBox = React.createClass({
+            //关于组件状态要注意this.state,this.setState,getInitialState的用法（状态的变化也即setState调用时会自动触发渲染render）
+            getInitialState: function(){
+                return {
+                    data: []
+                };
+            },
+            //组件的生命周期：componentWillMount,componentDidMount,componentWillUpdate,componentDidUpdate,componentWillUnmount
+            componentDidMount: function(){
+                var _this = this;
+                _this.setState({
+                    data: [{
+                        author: 'derick',
+                        text: 'i am derick'
+                    },{
+                        author: 'nana',
+                        text: 'i am nana'
+                    }]
+                });
+                setTimeout(function(){
+                    _this.setState({
+                        data: [{
+                            author: 'dericks',
+                            text: 'i am dericks'
+                        },{
+                            author: 'nana',
+                            text: 'i am nana'
+                        },{
+                            author: 'xingchen',
+                            text: 'i am xingchen'
+                        }]
+                    });
+                },5000);
+            },
+            handleCommentSubmit: function(commentObj){
+                //注意若先改变了this.state值，后续调用setState方法就不需要传参了（默认应该是使用最新的state数据）
+                this.state.data.push(commentObj);
+                this.setState();
+                //提交到服务端$.ajax,这先将发表的评论展示出来再向服务器发post请求，用户体验更好但需要对应容错机制
+            },
+            render: function(){
+                return (
+                    //注意组件的render方法渲染必须有一个根节点包裹（大坑）
+                    //注意组件之间的通信方式（onCommentSubmit回调）
+                    <div className="commentBox">
+                        <h1>Comments</h1>
+                        <CommentList comments={this.state.data} />
+                        <CommentForm onCommentSubmit={this.handleCommentSubmit} />
+                    </div>
+                );
+            }
+        });
+        React.render(
+            <CommentBox />,
+            document.body
+        );
+    </script>
+  </body>
+</html>

@@ -20,14 +20,17 @@
 
     var SearchBar = React.createClass({
         _handleUserInput: function(){
-            this.props.onUserInput(this.refs.searchKey.getDomNode().value,this.refs.isShowStock.getDomNode().value);
+            //注意api大小写getDOMNode(踩过坑)
+            var me = this;
+            this.props.onUserInput(me.refs.searchKey.getDOMNode().value,me.refs.isShowStock.getDOMNode().checked);
         },
         render: function(){
+            //注意通过this.refs来引用组件内dom节点时，dom节点定义位置的属性为ref而不是refs（踩过坑）
             return (
                 <form>
                     <input type="text" ref="searchKey" placeholder="search..." value={this.props.filterText} onChange={this._handleUserInput} />
                     <p>
-                        <input type="checkbox" refs="isShowStock" />
+                        <input type="checkbox" ref="isShowStock" checked={this.props.inStockOnly} onChange={this._handleUserInput} />
                         only show products in stock
                     </p>
                 </form>
@@ -43,10 +46,9 @@
 
     var ProductRow = React.createClass({
         render: function(){
-            var name = this.props.product.stocked ? this.props.product.name : <span>{this.props.product.name}</span>;
             return (
                 <tr>
-                    <td>{name}</td>
+                    <td>{this.props.product.name}</td>
                     <td>{this.props.product.price}</td>
                 </tr>
             );
@@ -55,10 +57,17 @@
 
     var ProductTable = React.createClass({
         render: function(){
-            var rows = [];
+            var rows = [], me = this;
             this.props.products.forEach(function(item){
-                rows.push(<ProductCategoryRow category={item.category} key={item.category} />);
-                rows.push(<ProductRow product={item} key={item.name} />);
+                //关于具体数据项显示与否逻辑判断最好是放在原子组件渲染render方法之外
+                if(item.name.indexOf(me.props.filterText) == -1){
+                    return;
+                }
+                if(me.props.inStockOnly && !item.stocked){
+                    return;
+                }
+                rows.push(<ProductCategoryRow category={item.category} />);
+                rows.push(<ProductRow product={item} />);
             });
             return (
                 <table className="productTabel">
@@ -80,7 +89,7 @@
         getInitialState: function(){
             return {
                 filterText: '',
-                inStockOnly: false
+                inStockOnly: true
             };
         },
         handleUserInput: function(searchKey,isShowStock){
@@ -98,9 +107,9 @@
                         onUserInput={this.handleUserInput}
                     />
                     <ProductTable
-                        products={this.props.products}
                         filterText={this.state.filterText}
                         inStockOnly={this.state.inStockOnly}
+                        products={this.props.products}
                     />
                 </div>
             );

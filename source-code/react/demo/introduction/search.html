@@ -60,6 +60,7 @@
             var rows = [], me = this;
             this.props.products.forEach(function(item){
                 //关于具体数据项显示与否逻辑判断最好是放在原子组件渲染render方法之外
+                //这也是由于React只能渲染单个根节点，如果要返回多个节点，它们必须被包含在同一个节点中
                 if(item.name.indexOf(me.props.filterText) == -1){
                     return;
                 }

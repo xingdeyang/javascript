@@ -55,7 +55,7 @@ step3:
 */
 function insertSort(arr){
 	var temp, inner, len = arr.length;
-	//outer的存在是为了保证遍历到每个未排序的数据，从而插入到已经排好序的数据中的合适自己的位置
+	//outer的存在是为了保证遍历到每个未排序的数据，从而插入到已经排好序的数据中的合适自己的位置(也就是说比outer变量下标号小的数据项都是有序的)
 	for(var outer=1; outer<len; outer++){
 		temp = arr[outer];
 		inner = outer;

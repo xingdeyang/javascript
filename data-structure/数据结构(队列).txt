@@ -12,8 +12,13 @@ queue定义：
 我们还要知道队列中存储了多少元素，可以使用length属性满足该需求，要想清空队列中的
 所有元素，可以使用clear方法来实现。
 
+计算机中在队列里删除一个数据项后，也可以将其他数据项都向前移动（模拟队列），但这样的
+效率很差。相反我们通过队列中队头和队尾指针的移动保持所有数据项的位置不变。
+
 function Queue(){
 	this.dataStore = [];
+	this.length = 0;
+	this.start = 0;
 	this.enqueue = enqueue;
 	this.dequeue = dequeue;
 	this.front = front;
@@ -24,18 +29,23 @@ function Queue(){
 
 function enqueue(element){
 	this.dataStore.push(element);
+	this.length++;
 }
 
 function dequeue(){
-	this.dataStore.shift();
+	if(!this.length){
+		return false;
+	}
+	this.start++;
+	this.length--;
 }
 
 function front(){
-	return this.dataStore[0];
+	return this.dataStore[this.start];
 }
 
 function back(){
-	return this.dataStore[this.dataStore.length - 1];
+	return this.dataStore[this.start + this.length - 1];
 }
 
 function empty(){

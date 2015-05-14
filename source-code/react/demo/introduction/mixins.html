@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="./build/react.js"></script>
+    <script src="./build/JSXTransformer.js"></script>
+    <script src="./build/jquery.min.js"></script>
+</head>
+<body>
+<!--组件是React复用代码最佳方式，但有时候复杂组件间也需要共用一些功能，React使用mixins来解决这类问题
+    其实就是通过混入方式实现代码复用-->
+<script type="text/jsx">
+    var SetIntervalMixin = {
+        componentWillMount: function(){
+            this.intervals = [];
+        },
+        setInterval: function(){
+            this.intervals.push(setInterval.apply(null,arguments));
+        },
+        componentWillUnmount: function(){
+            this.intervals.map(clearInterval);
+        }
+    };
+
+    var TickTock = React.createClass({
+        mixins: [SetIntervalMixin],
+        getInitialState: function(){
+            return {
+                seconds: 0
+            };
+        },
+        componentDidMount: function(){
+            this.setInterval(this.tick,1000);
+        },
+        tick: function(){
+            this.setState({seconds: this.state.seconds + 1});
+        },
+        render: function(){
+            return (
+                <p>
+                    React has been running {this.state.seconds} seconds
+                </p>
+            );
+        }
+    });
+
+</script>
+</body>
+</html>

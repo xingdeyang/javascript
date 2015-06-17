@@ -1,1 +1,1 @@
-安卓移动调试方案： https://developer.chrome.com/devtools/docs/remote-debugging
+瀹夊崜绉诲姩鍓嶇璋冭瘯 https://developer.chrome.com/devtools/docs/remote-debugging

@@ -1,0 +1,250 @@
+背景：
+在前端性能优化过程中“唯快不破”是我们一直奉行的理念，为此也沉淀出很多的优化方法论。最快的请求就是没有请求或者尽可能减少请求。
+所以我们开始在缓存上去做很多工作（expires，max-age, cdn，静态资源的JS本地缓存， 离线包机制等）来避免请求的发生，或者在前端，后
+端做资源combo服务，资源的按需加载，甚至直接上（页面直出 + cdn）来减少请求的次数，这些都是非常好的性能优化方式。但在过往的工作
+经历中也发现大家往往会非常关注静态资源的优化，而对于数据的加载优化会忽略较多，数据的缓存（JS缓存，浏览器缓存，服务端缓存）相信
+大家也有过许多较好的尝试，所以这里分析下对于ajax数据请求的合并来释放不必要的TCP资源占用从而避免后续资源加载的等待。
+
+调用示例：
+net.ajax({
+	url: '',
+	data: {},
+	xhrFields: {
+		withCredentials: true
+	},
+	plugins: {
+		'./mergerequest' : true
+	},
+	......
+});
+
+代理ajax:
+define(function(require,exports,module){
+	exports.ajax = function(options){
+		var plugins = $.extend(true,{},options.plugins,$.ajaxSettings.plugins);
+		if(plugins){
+			var context = options.context || $.ajaxSettings.context;
+			if(!context){
+				context = options.context = $(window.document.createElement('span'));
+			}
+			else if(!(context instanceof $)){
+				context = options.context = $(context);
+			}
+			
+			//重建xhr
+			var proxyXhrIns;
+			var methodList = ['abort','getResponseHeader','getAllResponseHeader','open','overrideMimeType','send','setRequestHeader'];
+			var requestList = ['withCredentials'];
+			var eventList = ['abort','error','load','loadend','loadstart','progress','timeout','readystatechange'];
+			var responseList = ['readystate','response','responseText','responseType','responseXML','status','statusText'];
+			options.xhr = (function(xhr){
+				var proxyXhr = function(){};
+				for(var i=0,len=methodList.length; i<len; i++){
+					if(typeof (xhr[methodList[i]]) !== 'undefined'){
+						proxyXhr.prototype[methodList[i]] = (function(method){
+							return function(){
+								return xhr.methodList[i].apply(xhr,Array.prototype.slice.call(arguments,0););
+							};
+						})(xhr[methodList[i]]);
+					}
+				}
+				proxyXhr.prototype.open = function(){
+					var me = this;
+					for(var i=0,len=eventList.length; i++){
+						(function(evnet){
+							xhr[event] = function(){
+								if(typeof me[event] == 'function'){
+									for(var j=0, num=responseList.length; j<num; j++){
+										try{
+											if(typeof xhr[responseList[i]] !== 'undefined'){
+												me[responseList[j]] = xhr[responseList[j]];
+											}
+										}catch(e){}
+									}
+									return me[event].apply(me,Array.prototype.slice.call(arguments,0););
+								}
+							};
+						})('on' + eventList[i]);
+						return xhr.open.apply(xhr,Array.prototype.slice.call(arguments,0));
+					}
+				};
+				proxyXhr.prototype.send = function(){
+					for(var i=0,len=requestList.length; i<len; i++){
+						if(typeof this[requestList[i]] !== 'undefined'){
+								xhr[requestList[i]] = this[requestList[i]];
+						}
+					}
+					return xhr.send.apply(xhr,Array.prototype.slice.call(arguments,0););
+				};
+				proxyXhrIns = new proxyXhr();
+				return function(){
+					return proxyXhrIns;
+				};
+			})($.ajaxSettings.xhr());
+			
+			//加载插件
+			var pluginNamelist = [];
+			for(var name in plugins){
+				if(plugins.hasOwnProperty(name)){
+					pluginNamelist.push(name);
+				}
+			}
+			require.async(pluginList,function(){
+				for(var i=0,len=pluginNamelist.length; i<len; i++){
+					pluginHandler = arguments[i]['getPluginHandler'].call(arguments[i],plugins[pluginNamelist[i]]);
+					for(var eventName in pluginHandler){
+						if(pluginHandler.hasOwnProperty(eventName)){
+							context.on(eventName,pluginHandler[eventName]);
+						}
+					}
+					context.trigger($.Event('ajaxStart'),[proxyXhrIns,options]);
+					$.ajax(options);
+				}
+			});
+			return proxyXhr;
+		}
+		else{
+			return $.ajax(options);
+		}
+	};
+	
+});
+
+合并插件：
+define(function(require,exports,module){
+	var _private = {
+		mapping: {},
+		config: {
+			options: {
+				dataType: 'json',
+				cache: false,
+				timeout: 0,
+				xhrFields: {
+					withCredentials: true
+				},
+				plugins: {},
+				type: 'POST'
+			},
+			// 合并请求公共参数
+			params: {}
+		}
+	};
+	exports.getPluginHandler = function(){
+		return {
+			'ajaxStart': function(event,xhr,settings){
+				//拿请求cgi的url来作为分组的依据
+				var groupName = String(settings.url).split(?)[0];
+				if(!_private.mapping[groupName]){
+					_private.mapping[groupName] = {
+						originXhr: $.ajaxSettings.xhr(),
+						optionList: [],
+						header: {},
+						interval: 0,
+						instance: null;
+					};
+				}
+				//重建xhr
+				settings.xhr = (function(singleProxyXhrIns,groupData){
+					return function(){
+						singleProxyXhrIns.open = function(){};
+						singleProxyXhrIns.send = function(){
+							//push操作其实就是缓存同一cgi的单个请求
+							if(groupData.optionList.push(settings) == 1){
+								setTimeout(function(){
+									groupData.originXhr.send = (function(send){
+										return function(){
+											var responseList = ['readyState', 'response', 'responseText', 'responseType', 'responseXML', 'status', 'statusText'];
+											var eventList = ['abort', 'error', 'load', 'loadend', 'loadstart', 'progress', 'timeout', 'readystatechange'];
+											for(var i=0,len=eventList.length; i<len; i++){
+												(function(event,callback){
+													groupData.originXhr[event] = function(){
+														var json,result;
+														//回调合并请求自身的事件
+														if(callback){
+															result = callback.apply(groupData.originXhr,Array.prototype.slice.call(arguments,0));
+														}
+														if(event == 'onreadystatechange'){
+															if(groupData.originXhr.readyState == 4 && groupData.originXhr.responseText){
+																try{
+																	json = JSON.parse(groupData.originXhr.responseText);
+																}
+																catch(e){
+																	json = JSON.string({result: e.number || -1, message: e.message || e.name || 'parseError'});
+																}
+															}
+														}
+														//分发合并请求的结果到各单个请求的回调
+														for(var j=0,num=groupData.optionList.length; j<num; j++){
+															var itemXhr = groupData.optionList[i].xhr();
+															if(typeof itemXhr[event] == 'function'){
+																//遍历合并请求的response属性copy到各单个请求的xhr上
+																for(var k=0,knum=responseList.length; k<knum; k++){
+																	if(json && responseList[k] == 'responseText'){
+																		if(typeof json == 'string'){
+																			//手工构造的json情况
+																			itemXhr[response[k]] = json;
+																		}
+																		else{
+																			//...cgi返回数据不符合约定的情况处理
+																		}
+																		else{
+																			//这里是约定的一种合并请求的返回格式
+																			itemXhr[responseList[k]] = JSON.stringify(json.data[j].retBody);
+																		}
+																	}
+																}
+																//调用各请求事件
+																if(itemXhr){
+																	itemXhr[event].apply(itemXhr,Arrya.prototype.slice.call(arguments,0));
+																}
+															}
+														}
+														if(callback){
+															return result;
+														}
+													};
+												})('on' + eventList[i],groupData.originXhr['on' + eventList[i]]);
+											}
+											return send.apply(groupData.originXhr,Array.prototype.slice.call(arguments,0));
+										};
+									})(groupData.originXhr.send);
+									//遍历个请求参数
+									var data = {}, params = $.extend(true,{merge:groupData.optionList.length},_private.config && _private.config.params), timeout = 1000;
+									for(var i=0,len=groupData.optionList.length; i<len; i++){
+										//新请求包的请求数据data(这里要求业务参数都是以data参数形式传递，不允许在uri上出现querystring但一些公共参数除外如sid))
+										data[i] = groupData.optionList[i] && groupData.optionList[i].data;
+										params = $.extend(true,params,uri.parseQueryString(uri.parseUrl(groupData.optionList[i].url).search));
+										//取最大的超时为合并请求的超时时间
+										timeout = Math.max(timeout,groupData.optionList[i].timeout);
+									}
+									//合并请求的发出（注意参数是合并后的参数集合，使用的xhr是groupData.xhr,所以response的分发也在groupData.xhr进行）
+									net.ajax($.extend(true,{},_private.config && _private.config.options,{
+										url: groupName + '?' + $.param(params),
+										data: {
+											param: JSON.stringify(data)
+										},
+										headers: groupData.headers,
+										xhr: function(){
+											return groupData.originXhr;
+										}
+									}));
+									_private.mapping[groupName] = null;
+								},0);
+							}
+						};
+						singleProxyXhrIns.getResponseHeader = function(){
+							//各单个请求从合并请求处获取header信息
+							return groupData.originXhr.getResponseHeader.apply(groupData.originXhr,Array.prototype.slice.call(arguments,0));
+						};
+						singleProxyXhrIns.setRequestHeader = function(name,value){
+							//缓存各请求的header
+							groupData.headers[name] = value;
+						};
+						//单个请求还是通过singleProxyXhrIns发送出去的，只是这些请求都会被groupData.optionList 临时缓存下来
+						return singleProxyXhrIns;
+					};
+				})(settings.xhr(),_private.mapping[groupName]);
+			}
+		};
+	};
+});

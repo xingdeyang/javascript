@@ -1,4 +1,4 @@
-	// 测试数据
+	// 测试数据 
         var mylist = [{name: 'derick'}, {name: 'nana'}],
             testTplStr = '<ul><% for(var i=0; i<data.length; i++) { %><li><%= data[i].name %></li> <% } %></ul>';
 

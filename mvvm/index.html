@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <div id="app">
+        <input type="text" placeholder="input you name" v-model="name" />
+        <p v-text="name"></p>
+    </div>
+    <script type="text/javascript">
+        function Vue (option) {
+            this.$el = document.getElementById(option && option.el)
+            this.$data = option && option.data
+            this.init()
+        }
+        Vue.prototype.init = function () {
+            this.bindData()
+            this.bindModel()
+        }
+        Vue.prototype.bindData = function () {
+            let doms = this.$el.querySelectorAll('[v-text]')
+            for (var i=0,len=doms.length; i<len; i++) {
+                var rendVal = doms[i].getAttribute('v-text')
+                doms[i].innerHTML = this.$data[rendVal]
+            }
+        }
+        Vue.prototype.bindModel = function () {
+            let doms = this.$el.querySelectorAll('[v-model]'),
+                me = this;
+            for (var i=0,len=doms.length; i<len; i++) {
+                var rendVal = doms[i].getAttribute('v-model')
+                doms[i].value = this.$data[rendVal]
+                // 数据劫持
+                if (!doms[i].hasBind) {
+                    this.defineObj(this.$data, rendVal)
+                    doms[i].addEventListener('keyup', function (e) {
+                        me.$data[rendVal] = e.target.value
+                    }, false)
+                    doms[i].hasBind = true
+                }
+            }
+        }
+        Vue.prototype.defineObj = function (data, key) {
+            var me = this,
+                value = data[key];
+            // Object.defineProperty注意value、get、set、writable、configurable、enumerable的配置
+            // 经常遇到的错误提示，很有启发: Uncaught TypeError: Invalid property descriptor. Cannot both specify accessors and a value or writable attribute
+            Object.defineProperty(data, key, {
+                get () {
+                    return value
+                },
+                set (newVal) {
+                    value = newVal
+                    me.bindModel()
+                    me.bindData()
+                },
+                enumerable: true,
+                configurable: true
+            })
+        }
+        var instance = new Vue({
+            el: 'app',
+            data: {
+                name: 'derick',
+                age: 32
+            }
+        })
+        setTimeout(function () {
+            instance.$data.name = 'nana'
+        }, 1000)
+
+    </script>
+</body>
+</html>

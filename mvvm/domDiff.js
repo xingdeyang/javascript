@@ -122,6 +122,10 @@ console.log(patches)
 
 
 // 第二步: 打补丁（基于实际dom）
+
+/*
+* 构建的 JavaScript 对象树和render出来真正的DOM树的信息、结构是一样的。所以我们可以对那棵DOM树也进行深度优先的遍历，遍历的时候从生成的patches对象中找出当前遍历的节点差异，然后进行 DOM 操作
+* */
 var patchIndex = 0
 function patch (dom, patches) {
     walkPatch(dom, patches)

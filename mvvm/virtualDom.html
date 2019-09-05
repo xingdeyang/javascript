@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>通过dom节点生成js虚拟树</title>
+</head>
+<body>
+    <ul id="mytest">
+        <li class="item">derick</li>
+        <li class="item">nana</li>
+        <li class="item">xinzai</li>
+    </ul>
+
+    <script type="text/javascript">
+        class Element {
+            constructor (nodeType, props, children) {
+                this.nodeType = nodeType
+                this.props = props
+                this.children = children || []
+            }
+        }
+
+        function createElement (nodeType, props, children) {
+            return new Element(nodeType, props, children)
+        }
+
+        function createVirtualDom (dom) {
+            var nodeType = dom.nodeName.toLowerCase(),
+                props = {},
+                attributes = dom.attributes,
+                virtualdom;
+            // 文本节点
+            if (nodeType == '#text') {
+                virtualdom = createElement(nodeType, props, [dom.nodeValue])
+            } else {
+                for (var key in attributes) {
+                    if (attributes.hasOwnProperty(key)) {
+                        let attr = attributes[key].nodeName
+                        props[attr] = dom.getAttribute(attr)
+                    }
+                }
+                virtualdom = createElement(nodeType, props)
+                if (dom.hasChildNodes()) {
+                    let childNodes = dom.childNodes
+                    childNodes.forEach(child => {
+                        // 标签之间的空白也会被当做节点，忽略
+                        if (child.nodeName == '#text' && /(\s+)$/g.exec(child.nodeValue)) {
+                            return
+                        } else {
+                            virtualdom.children.push(createVirtualDom(child))
+                        }
+                    })
+                }
+            }
+
+            return virtualdom
+        }
+        console.log(createVirtualDom(document.getElementById('mytest')))
+    </script>
+</body>
+</html>
